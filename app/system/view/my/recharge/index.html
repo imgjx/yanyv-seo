@@ -1,0 +1,108 @@
+<div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md8">
+            <div class="layui-card">
+                <div class="layui-card-header">在线充值</div>
+                <div class="layui-card-body">
+                    <div class="layui-form" lay-filter="pay_form">
+                        <!--固定金额档位-->
+                        <div id="fixed-box"></div>
+                        <!--自定义金额-->
+                        <div id="custom-box">
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">充值金额</label>
+                                <div class="layui-input-inline"><input type="number" name="money" id="money-input" placeholder="请输入金额(元)" autocomplete="off" class="layui-input"/></div>
+                                <div class="layui-form-mid layui-word-aux" id="rate-tip">1元 = {$rate} 积分</div>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">支付方式</label>
+                            <div class="layui-input-block" style="padding-top:6px;">
+                                <input type="radio" name="type" value="alipay" title="支付宝" checked/>
+                                <input type="radio" name="type" value="wxpay" title="微信"/>
+                                <input type="radio" name="type" value="qqpay" title="QQ钱包"/>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div class="layui-input-block">
+                                <button class="layui-btn" id="btn-pay"><i class="layui-icon layui-icon-rmb"></i> 立即充值</button>
+                                <span class="layui-form-mid layui-word-aux" id="pay-tip">提交后将跳转到支付页面，完成支付后积分自动到账。</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-md4">
+            <div class="layui-card">
+                <div class="layui-card-header">我的余额</div>
+                <div class="layui-card-body" style="text-align:center;">
+                    <b style="font-size:30px;color:#16B777;">{$points}</b><br/><span class="layui-word-aux">当前可用积分</span>
+                </div>
+            </div>
+            <div class="layui-card">
+                <div class="layui-card-body">
+                    <a href="#/my.pointslog/index" class="layui-btn layui-btn-primary layui-btn-fluid"><i class="layui-icon layui-icon-log"></i> 查看财务记录</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!--JS部分-->
+<script type="text/javascript">
+layui.use([], function(){
+    var layer=layui.layer, form=layui.form, admin=layui.admin;
+    var map_root = layui.cache.maps;
+    var app_root = map_root + 'my.recharge/';
+    var mode = '{$mode}', rate = {$rate}, Fixed = {$fixed|raw};
+    /*构建固定档位*/
+    function renderFixed(){
+        if(mode != 'custom'){
+            var h = '<div class="layui-form-item"><label class="layui-form-label">选择档位</label><div class="layui-input-block" style="padding-top:6px;">';
+            for(var i in Fixed){
+                h += '<input type="radio" name="fixm" lay-filter="fixm" value="'+Fixed[i].money+'" title="¥'+Fixed[i].money+' → '+Fixed[i].points+'积分"'+(i==0?' checked':'')+'/>';
+            }
+            h += '</div></div>';
+            $('#fixed-box').html(h);
+            form.render('radio');
+        }else{
+            $('#fixed-box').empty();
+        }
+    }
+    renderFixed();
+    /*模式显隐*/
+    function switchBox(){
+        var m = $('input[name=fixm]:checked');
+        if(mode == 'fixed'){ $('#custom-box').hide(); }
+        else { $('#custom-box').show(); }
+    }
+    form.on('radio(fixm)',function(){
+        if(mode == 'mixed') $('#money-input').val(this.value);
+    });
+    /*立即充值*/
+    $('#btn-pay').on('click',function(){
+        var money = 0;
+        if(mode == 'fixed'){ money = parseFloat($('input[name=fixm]:checked').val() || 0); }
+        else { money = parseFloat($('#money-input').val() || 0); }
+        if(!(money > 0)) return layer.msg('请输入正确的充值金额');
+        var btn = $(this);
+        if(btn.attr('stop')) return; btn.attr('stop',1);
+        admin.req(app_root+"order",{money:money, type:$('input[name=type]:checked').val()},function(res){
+            btn.removeAttr('stop');
+            if(res.code != 1) return layer.msg(res.msg);
+            //轮询订单状态
+            var orderid = res.data.orderid;
+            var timer = setInterval(function(){
+                admin.req(app_root+"query",{orderid:orderid},function(q){
+                    if(q.code == 1 && q.data.status == 1){
+                        clearInterval(timer);
+                        layer.msg('充值成功！到账 '+q.data.points+' 积分',{icon:1,time:2000},function(){ location.reload(); });
+                    }
+                },'post',{headersToken:true});
+            },3000);
+            setTimeout(function(){ clearInterval(timer); },120000);
+            window.open(res.data.url);
+        },'post',{headersToken:true});
+    });
+});
+</script>

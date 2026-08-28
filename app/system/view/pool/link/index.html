@@ -1,0 +1,104 @@
+<div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-card-header">
+            <form class="layui-form render">
+                <div class="layui-form-item">
+                    <div class="layui-inline" style="width:200px;"><input type="text" name="kw" placeholder="链接关键词" autocomplete="off" class="layui-input" lay-affix="clear"/></div>
+                    <div class="layui-inline" style="width:110px;"><select name="engine_id" id="search_link_engine"></select></div>
+                    <div class="layui-inline" style="width:90px;">
+                        <select name="guide_type">
+                            <option value="">引导类型</option>
+                            <option value="1">普通引导</option>
+                            <option value="2">301强引</option>
+                        </select>
+                    </div>
+                    <div class="layui-inline" style="width:80px;">
+                        <select name="state">
+                            <option value="">状态</option>
+                            <option value="1">投放中</option>
+                            <option value="0">已停用</option>
+                        </select>
+                    </div>
+                    <div class="layui-inline">
+                        <div class="layui-btn-group">
+                            <button class="layui-btn" lay-submit lay-filter="search-poollink"><i class="layui-icon layui-icon-search"></i> 搜索</button>
+                            <a class="layui-btn" lay-submit lay-filter="search-poollink-all"><i class="layui-icon layui-icon-light"></i>全部</a>
+                            <a class="layui-btn layui-btn-normal" id="link-out"><i class="layui-icon layui-icon-export"></i> 导出txt</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="layui-card-body">
+            <table lay-filter="poollink" id="poollink"></table>
+        </div>
+    </div>
+</div>
+<!--JS部分-->
+<script type="text/javascript">
+layui.use([], function(){
+    var map_root = layui.cache.maps;
+    var app_root = map_root + 'pool.link/';
+    var layer = layui.layer,table=layui.table,form=layui.form,admin=layui.admin;
+    var limit = {$limit};
+    var Engines = {$engines|raw};
+    /*引擎下拉选项*/
+    var engOptions = {'':'全部引擎'};
+    for(var eid in Engines){ engOptions[eid] = Engines[eid]; }
+    admin.util.buildOption('#search_link_engine',engOptions,'');
+    /*当前搜索条件（导出共用）*/
+    function getWhere(){
+        var data = form.val('search_link_area') || {};
+        return $('form.render').serialize();
+    }
+    /*渲染数据*/
+    table.render({
+        elem: '#poollink',
+        size: 'sm',
+        page: true,
+        limit: limit,
+        height: 'full-195',
+        url: app_root+"index?do=json",
+        cellExpandedMode:'tips',
+        cols: [[
+            {type:'checkbox',fixed:'left'},
+            {field:'lid',width:60,unresize:true,align:'center',title:'ID',sort:!0},
+            {field:"url",minWidth:240,title:"链接地址",templet:function(d){return '<a href="'+d.url+'" target="_blank" style="color:#01AAED">'+d.url+'</a>'}},
+            {field:"engine_name",width:100,align:'center',title:"搜索引擎"},
+            {field:"guide_type",width:90,align:'center',title:"引导类型",templet:function(d){return d.guide_type==2 ? '<span style="color:#FF5722">301强引</span>' : '普通'}},
+            {field:"used",width:70,align:'center',title:"已引导",sort:!0},
+            {field:"surplus",width:70,align:'center',title:"剩余"},
+            {field:"userid",width:70,align:'center',title:"用户ID"},
+            {field:"source_ip",width:110,align:'center',title:"提交IP"},
+            {field:"add_time",width:160,align:'center',title:"提交时间",templet:function(d){return d.add_time ? layui.util.toDateString(d.add_time*1000,'yyyy-MM-dd HH:mm:ss') : '-'}},
+            {field:'state',width:80,align:'center',templet:function(d){return '<input type="checkbox" name="state" lay-skin="switch" lay-text="投放|停用" lay-filter="link-chang" value="'+d.state+'" data-json="'+encodeURIComponent(JSON.stringify(d))+'"'+(d.state==1 ? ' checked' : '')+'>';},unresize:true,title:'状态'},
+            {fixed:'right',width:80,align:'center',toolbar:'<div><a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del">删除</a></div>',title:'操作'}
+        ]],
+        done: function(){ form.render('checkbox'); }
+    });
+    /*状态开关*/
+    form.on('switch(link-chang)',function(obj){
+        var json = JSON.parse(decodeURIComponent($(this).data('json'))), value = obj.elem.checked ? 1 : 0;
+        admin.req(app_root+"up",{lid:json.lid,av:value,af:'state'},function(res){
+            layer.tips(res.msg,obj.othis,{time:1000});
+            if(res.code === 0) obj.elem.checked = parseInt(obj.value);
+        },'post',{headersToken:true});
+    });/**/
+    /*搜索按钮(自动reload约定：lay-filter="search-poollink"/"search-poollink-all")*/
+    /*导出txt(按当前条件)*/
+    $('#link-out').on('click',function(){
+        var f = $('form.render').serialize();
+        window.location.href = app_root+"out"+(f ? '?'+f : '');
+    });/**/
+    /*删除*/
+    function del(ids){
+        layer.confirm('确定要删除所选链接吗？已消耗的积分不予退还。',function(){
+            admin.req(app_root+"del",{lid:ids},function(res){
+                layer.msg(res.msg,{shade:[0.4,'#000'],time:1500},function(){
+                    if(res.code==1) table.reloadData('poollink');
+                });
+            },'post',{headersToken:true});
+        });
+    }/**/
+});
+</script>

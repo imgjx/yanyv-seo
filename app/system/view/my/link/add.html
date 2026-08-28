@@ -1,0 +1,147 @@
+<div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md8">
+            <div class="layui-card">
+                <div class="layui-card-header">添加链接<span class="layui-form-mid layui-word-aux" style="margin-left:10px;">每批最多1000条，重复链接自动忽略</span></div>
+                <div class="layui-card-body layui-form" lay-filter="link_form">
+                    <div class="layui-form-item layui-form-text">
+                        <label class="layui-form-label">链接列表</label>
+                        <div class="layui-input-block">
+                            <textarea name="urls" id="urls" placeholder="每行一条URL，如：&#10;http://www.example.com/1.html&#10;https://www.example.com/2.html" class="layui-textarea" style="height:220px;"></textarea>
+                            <div class="layui-form-mid layui-word-aux">已输入：<span id="url-count" style="color:#16B777">0</span> 条</div>
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">搜索引擎</label>
+                        <div class="layui-input-inline" style="width:200px;">
+                            <select name="engine_id" id="engine-select" lay-filter="engine-select"></select>
+                        </div>
+                        <label class="layui-form-label">引导类型</label>
+                        <div class="layui-input-inline" style="width:180px;">
+                            <select name="guide_type" id="guide-type" lay-filter="guide-type"></select>
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">投放站点</label>
+                        <div class="layui-input-inline" style="width:200px;">
+                            <select name="site_id" id="site-select" {if $canPickSite neq 1}disabled title="系统未开放自选站群"{/if}>
+                                <option value="0">全站轮询</option>
+                                {volist name="siteList" id="vo"}
+                                <option value="{$vo.siteid}">{$vo.title}</option>
+                                {/volist}
+                            </select>
+                        </div>
+                        <label class="layui-form-label">引导次数</label>
+                        <div class="layui-input-inline" style="width:180px;">
+                            <select name="guide_count" id="guide-count" lay-filter="guide-count"></select>
+                        </div>
+                        <span class="layui-form-mid layui-word-aux">每条链接的引导额度，从可选选项中选择</span>
+                    </div>
+                    <div class="layui-form-item">
+                        <div class="layui-input-block">
+                            <button class="layui-btn layui-btn-normal" id="btn-submit"><i class="layui-icon layui-icon-ok-circle"></i> 提交并扣费</button>
+                            <span class="layui-form-mid" id="cost-tip" style="margin-left:15px;">当前余额：<b style="color:#16B777">{$points}</b> 积分</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-md4">
+            <div class="layui-card">
+                <div class="layui-card-header">计费说明</div>
+                <div class="layui-card-body" style="line-height:2;" id="price-info">请选择引擎…</div>
+            </div>
+        </div>
+    </div>
+</div>
+<!--JS部分-->
+<script type="text/javascript">
+layui.use([], function(){
+    var layer=layui.layer, form=layui.form, admin=layui.admin;
+    var app_root = layui.cache.maps + 'my.link/';
+    var Engines = {$engines|raw};
+    var cur = null;
+    /*构建引擎下拉*/
+    var h = '';
+    for(var i in Engines){
+        var e = Engines[i];
+        h += '<option value="'+e.engine_id+'">'+e.name+'（普通 '+e.price_normal+' / 强引 '+e.price_301+'）</option>';
+    }
+    $('#engine-select').html(h);
+    /*引擎变更 -> 引导类型与引导数选项*/
+    form.on('select(engine-select)',function(){ loadEngine(); });
+    form.on('select(guide-type)',function(){ preview(); });
+    form.on('select(guide-count)',function(){ preview(); });
+    function loadEngine(){
+        var id = parseInt($('#engine-select').val());
+        for(var i in Engines){ if(Engines[i].engine_id == id){ cur = Engines[i]; break; } }
+        var gh = '<option value="1">普通引导 ×'+cur.price_normal+'/次</option>';
+        if(parseFloat(cur.price_301) > 0) gh += '<option value="2">301强引 ×'+cur.price_301+'/次</option>';
+        $('#guide-type').html(gh);
+        /*引导数选项（预设选择器）*/
+        var opts = cur.guide_options && cur.guide_options.length ? cur.guide_options : [1];
+        var oh = '';
+        for(var j in opts){ oh += '<option value="'+opts[j]+'">'+opts[j]+' 次/条</option>'; }
+        $('#guide-count').html(oh);
+        form.render('select');
+        showInfo();
+        preview();
+    }
+    function showInfo(){
+        var opts = cur.guide_options && cur.guide_options.length ? cur.guide_options.join(' / ') : '1';
+        $('#price-info').html(
+            '<b>'+cur.name+'</b><br/>匹配模式：'+(cur.match_mode==1?'仅UA':(cur.match_mode==2?'仅IP':'IP+UA'))+
+            '<br/>普通引导：'+cur.price_normal+' 积分/次'+
+            (parseFloat(cur.price_301)>0 ? '<br/>301强引：'+cur.price_301+' 积分/次' : '<br/><span style="color:#999">不支持301强引</span>')+
+            '<br/>引导数选项：'+opts+
+            '<br/>计费方式：单价 × 链接条数 × 引导次数'+
+            '<br/>每批最多1000条、最少1条'
+        );
+    }
+    /*实时计费*/
+    function preview(){
+        if(!cur) return;
+        var n = $.trim($('#urls').val()) ? $('#urls').val().split(/[\r\n]+/).filter(function(v){return $.trim(v)}).length : 0;
+        var gt = parseInt($('#guide-type').val()||1), gc = parseInt($('#guide-count').val()||1);
+        if(!(n>0)){ $('#cost-tip').html('当前余额：<b style="color:#16B777">{$points}</b> 积分'); return; }
+        admin.req(app_root+"preview",{engine_id:cur.engine_id,guide_type:gt,guide_count:gc,num:n},function(res){
+            if(res.code==1){
+                $('#cost-tip').html('本次需扣：<b style="color:#FF5722">'+res.data.cost+'</b> 积分，余额 <b style="color:#16B777">'+res.data.balance+'</b>');
+            }else{
+                $('#cost-tip').html('<span style="color:#FF5722">'+res.msg+'</span>');
+            }
+        },'post',{headersToken:true});
+    }
+    $('#urls').on('input change',function(){
+        countUrls();
+        clearTimeout(window._pt);
+        window._pt = setTimeout(preview,400);
+    });
+    /*统计行数*/
+    function countUrls(){
+        var n = $.trim($('#urls').val()) ? $('#urls').val().split(/[\r\n]+/).filter(function(v){return $.trim(v)}).length : 0;
+        $('#url-count').text(n);
+    }
+    /*提交*/
+    $('#btn-submit').on('click',function(){
+        var urls = $.trim($('#urls').val());
+        if(!urls) return layer.msg('请输入需要提交的URL');
+        var btn = $(this);
+        if(btn.attr('stop')) return; btn.attr('stop',1);
+        admin.req(app_root+"submit",{
+            engine_id:$('#engine-select').val(),
+            guide_type:$('#guide-type').val(),
+            guide_count:$('#guide-count').val(),
+            site_id:$('#site-select').val() || 0,
+            urls:urls
+        },function(res){
+            btn.removeAttr('stop');
+            layer.msg(res.msg,{shade:[0.4,'#000'],time:2000},function(){
+                if(res.code==1){ location.reload(); }
+            });
+        },'post',{headersToken:true});
+    });
+    /*初始渲染*/
+    loadEngine();
+});
+</script>

@@ -1,0 +1,57 @@
+<div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-card-header">
+            <form class="layui-form render">
+                <div class="layui-form-item">
+                    <div class="layui-inline" style="width:180px;"><input type="text" name="kw" placeholder="备注/关联单号" autocomplete="off" class="layui-input" lay-affix="clear"/></div>
+                    <div class="layui-inline" style="width:110px;">
+                        <select name="type">
+                            <option value="">全部类型</option>
+                            <option value="recharge">充值</option>
+                            <option value="consume">消费</option>
+                            <option value="refund">退还</option>
+                            <option value="admin">调整</option>
+                        </select>
+                    </div>
+                    <div class="layui-inline" style="width:200px;"><input type="text" name="sotime" date-render placeholder="时间范围" class="layui-input" lay-affix="clear"/></div>
+                    <div class="layui-inline">
+                        <div class="layui-btn-group">
+                            <button class="layui-btn" lay-submit lay-filter="search-pointslog"><i class="layui-icon layui-icon-search"></i> 搜索</button>
+                            <a class="layui-btn" lay-submit lay-filter="search-pointslog-all"><i class="layui-icon layui-icon-light"></i>全部</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="layui-card-body">
+            <table lay-filter="pointslog" id="pointslog"></table>
+        </div>
+    </div>
+</div>
+<!--JS部分-->
+<script type="text/javascript">
+layui.use([], function(){
+    var table=layui.table;
+    var limit = {$limit};
+    var Type = {recharge:'充值',consume:'消费',refund:'退还',admin:'调整'};
+    /*渲染数据*/
+    table.render({
+        elem: '#pointslog',
+        size: 'sm',
+        page: true,
+        limit: limit,
+        height: 'full-195',
+        url: layui.cache.maps + 'my.pointslog/index?do=json',
+        cols: [[
+            {field:'pid',width:80,unresize:true,align:'center',title:'ID',sort:!0},
+            {field:"type",width:90,align:'center',title:"类型",templet:function(d){return Type[d.type]||d.type}},
+            {field:"points",width:120,align:'center',title:"变动积分",sort:!0,templet:function(d){return parseFloat(d.points)>0 ? '<span style="color:#16B777">+'+d.points+'</span>' : '<span style="color:#FF5722">'+d.points+'</span>'}},
+            {field:"before_points",width:100,align:'center',title:"变动前"},
+            {field:"after_points",width:100,align:'center',title:"变动后"},
+            {field:"remark",minWidth:220,title:"备注说明",cellExpandedMode:'tips'},
+            {field:"rel_order",width:160,title:"关联单号",templet:function(d){return d.rel_order||'-'}},
+            {field:"add_time",width:160,align:'center',title:"时间",templet:function(d){return d.add_time ? layui.util.toDateString(d.add_time*1000,'yyyy-MM-dd HH:mm:ss') : '-'}}
+        ]]
+    });
+});
+</script>

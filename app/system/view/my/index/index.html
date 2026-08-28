@@ -1,0 +1,62 @@
+<div class="layui-fluid">
+    <!--统计卡-->
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md3">
+            <div class="layui-card"><div class="layui-card-body" style="text-align:center;padding:20px 0;">
+                <b style="font-size:28px;color:#16B777;">{$stats.surplus}</b><br/><span class="layui-word-aux">还未引导次数</span>
+            </div></div>
+        </div>
+        <div class="layui-col-md3">
+            <div class="layui-card"><div class="layui-card-body" style="text-align:center;padding:20px 0;">
+                <b style="font-size:28px;color:#01AAED;">{$stats.guide_today}</b><br/><span class="layui-word-aux">今日引导次数</span>
+            </div></div>
+        </div>
+        <div class="layui-col-md3">
+            <div class="layui-card"><div class="layui-card-body" style="text-align:center;padding:20px 0;">
+                <b style="font-size:28px;color:#FF5722;">{$stats.cost_today}</b><br/><span class="layui-word-aux">今日消耗积分</span>
+            </div></div>
+        </div>
+        <div class="layui-col-md3">
+            <div class="layui-card"><div class="layui-card-body" style="text-align:center;padding:20px 0;">
+                <b style="font-size:28px;color:#FFB800;">{$points}</b><br/><span class="layui-word-aux">积分余额</span>
+            </div></div>
+        </div>
+    </div>
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md8">
+            <div class="layui-card">
+                <div class="layui-card-header">最近提交的链接
+                    <a href="#/my.link/add" class="layui-btn layui-btn-xs layui-btn-normal" style="float:right;margin-top:6px;"><i class="layui-icon layui-icon-add-circle"></i> 添加链接</a>
+                    <a href="#/my.link/index" class="layui-btn layui-btn-xs" style="float:right;margin-top:6px;">查看全部</a>
+                </div>
+                <div class="layui-card-body">
+                    <table class="layui-table" size="sm">
+                        <thead><tr><th>链接</th><th width="90">引擎</th><th width="80">已引导</th><th width="70">剩余</th></tr></thead>
+                        <tbody>
+                        {volist name="recent" id="vo"}
+                        <tr>
+                            <td><a href="{$vo.url}" target="_blank" style="color:#01AAED;">{$vo.url|mb_substr=0,52}</a></td>
+                            <td>{$engines[$vo.engine_id]|default='-'}</td>
+                            <td>{$vo.used}</td>
+                            <td>{$vo.total - $vo.used}</td>
+                        </tr>
+                        {/volist}
+                        {if empty($recent)}<tr><td colspan="4" align="center">暂无数据，快去<a href="#/my.link/add" style="color:#01AAED">添加链接</a>吧！</td></tr>{/if}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-md4">
+            <div class="layui-card">
+                <div class="layui-card-header">快捷入口</div>
+                <div class="layui-card-body">
+                    <a href="#/my.link/add" class="layui-btn layui-btn-fluid"><i class="layui-icon layui-icon-add-circle"></i> 添加链接</a>
+                    <a href="#/my.recharge/index" class="layui-btn layui-btn-warm layui-btn-fluid"><i class="layui-icon layui-icon-rmb"></i> 在线充值</a>
+                    <a href="#/my.pointslog/index" class="layui-btn layui-btn-primary layui-btn-fluid"><i class="layui-icon layui-icon-log"></i> 财务记录</a>
+                    <a href="#/system.manager/info/action=info" class="layui-btn layui-btn-primary layui-btn-fluid"><i class="layui-icon layui-icon-vercode"></i> 修改密码</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

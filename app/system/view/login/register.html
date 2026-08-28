@@ -1,0 +1,108 @@
+<!doctype html>
+<html>
+<head>
+<title>用户注册 - {:vconfig('site_title','烟雨蜘蛛池系统')}</title>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<link rel="shortcut icon" href="{PUBLIC__PATH}/favicon.ico"/>
+<link href="{STATIC__PATH}admin/login/login.css" rel="stylesheet" type="text/css"/>
+<link href="{STATIC__PATH}layui/css/layui.css" rel="stylesheet" type="text/css"/>
+<script src="{STATIC__PATH}layui/layui.js"></script>
+<script type="text/javascript">var $=layui.$,jQuery=layui.jquery;</script>
+<script src="{STATIC__PATH}script/md5.js"></script>
+<style>.main{position:relative;}</style>
+</head>
+<body>
+    <div class="login">
+        <div class="logo"></div>
+        <form onsubmit="return false;">
+            <div class="title">用户注册</div>
+            <div class="main">
+                <div class="login-item">
+                    <i class="layui-icon">&#xe66f;</i><input type="text" name="username" id="username" value="" autocomplete="off" placeholder="用户名(4-15位字母数字下划线)" />
+                </div>
+                <div class="login-item">
+                    <i class="layui-icon">&#xe673;</i><input type="password" name="password" id="password" value="" autocomplete="off" placeholder="密  码(至少6位)" />
+                </div>
+                <div class="login-item">
+                    <i class="layui-icon">&#xe673;</i><input type="password" name="password2" id="password2" value="" autocomplete="off" placeholder="确认密码" />
+                </div>
+                <div class="login-item sub">
+                    <span><button id="register_btn" type="button" style="border-radius:50px;width:100%;display:block;">注 册</button></span>
+                </div>
+                <div style="text-align:center;margin-top:12px;">
+                    <a href="{$appMap}/login/index" style="color:#fff;font-size:13px;">已有账号？返回登录</a>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div id="bgBox">
+        <ul class="slideBg">
+            <li><img src="{STATIC__PATH}admin/login/banner_1.jpg"></li>
+        </ul>
+    </div>
+<script type="text/javascript">
+    layui.use(function(){
+        var layer = layui.layer;
+        //获取焦点
+        $(".login-item input").focus(function(){
+            $(this).parent().addClass("focus");
+        });
+        //失去焦点
+        $(".login-item input").blur(function(){
+            $(this).parent().removeClass("focus");
+        });
+        //默认焦点
+        $('#username').focus();
+        //错误提示：输入框旁气泡
+        var tip = function(t,o,f){layer.tips(t,o,{tips:[f||1,'#ff5722'],time:3000});o.focus();return false;};
+        //统一失败弹窗：任何注册失败原因都以弹窗形式展现
+        var fail = function(msg){
+            layer.msg(msg || '注册失败',{icon:2,shade:[0.4,'#000'],time:2500});
+            return false;
+        };
+        //回车触发
+        $(document).keypress(function(e){if(e.which == 13){register();}});
+        //点击触发
+        $('#register_btn').on('click',function(){register();return false;});
+        //注册处理
+        var register = function(){
+            var username = $.trim($('#username').val());
+            var password = $('#password').val();
+            var password2= $('#password2').val();
+            if(username == '') return tip('请输入用户名',$('#username'),1);
+            if(!/^[A-Za-z_][A-Za-z0-9_]{3,14}$/.test(username)) return tip('用户名需4-15位字母数字或下划线，不能以数字开头',$('#username'),1);
+            if(password.length < 6) return tip('密码至少6位数',$('#password'),1);
+            if(password !== password2) return tip('两次输入的密码不一致',$('#password2'),1);
+            var btn = $('#register_btn');
+            if(btn.attr('stop')) return false;
+            btn.attr('stop',1).addClass('layui-disabled');
+            $.ajax({
+                type: "POST",
+                url: "{$appMap}/login/doregister",
+                data: {username:username,password:hex_md5(password),password2:hex_md5(password2)},
+                dataType: "json",
+                success:function(res){
+                    if(res.code == '1'){
+                        layer.msg(res.msg || '注册成功',{icon:1,time:1200},function(){ location.href = res.data.url; });
+                    }else{
+                        fail(res.msg);
+                        btn.removeAttr('stop').removeClass('layui-disabled');
+                    }
+                },
+                error:function(xhr){
+                    //服务端异常也必须有提示框
+                    var msg = '网络异常，请稍后再试！';
+                    try{
+                        var j = JSON.parse(xhr.responseText);
+                        if(j && j.msg) msg = j.msg;
+                    }catch(e){}
+                    fail(msg);
+                    btn.removeAttr('stop').removeClass('layui-disabled');
+                }
+            });
+        };
+    });
+</script>
+</body>
+</html>

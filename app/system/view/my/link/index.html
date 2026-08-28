@@ -1,0 +1,92 @@
+<div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-card-header">
+            <form class="layui-form render">
+                <div class="layui-form-item">
+                    <div class="layui-inline" style="width:200px;"><input type="text" name="kw" placeholder="链接关键词" autocomplete="off" class="layui-input" lay-affix="clear"/></div>
+                    <div class="layui-inline" style="width:110px;"><select name="engine_id" id="my_engine"></select></div>
+                    <div class="layui-inline" style="width:90px;">
+                        <select name="state">
+                            <option value="">状态</option>
+                            <option value="1">进行中</option>
+                            <option value="2">已完成</option>
+                            <option value="3">已暂停</option>
+                        </select>
+                    </div>
+                    <div class="layui-inline">
+                        <div class="layui-btn-group">
+                            <button class="layui-btn" lay-submit lay-filter="search-mylink"><i class="layui-icon layui-icon-search"></i> 搜索</button>
+                            <a class="layui-btn" lay-submit lay-filter="search-mylink-all"><i class="layui-icon layui-icon-light"></i>全部</a>
+                            <a class="layui-btn layui-btn-normal" href="#/my.link/add"><i class="layui-icon layui-icon-add-circle"></i> 添加链接</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="layui-card-body">
+            <table lay-filter="mylink" id="mylink"></table>
+        </div>
+    </div>
+</div>
+<!--JS部分-->
+<script type="text/javascript">
+layui.use([], function(){
+    var layer=layui.layer, table=layui.table, form=layui.form, admin=layui.admin;
+    var limit = {$limit};
+    var app_root = layui.cache.maps + 'my.link/';
+    var Engines = {$engines|raw};
+    var engOptions = {'':'全部引擎'};
+    for(var eid in Engines){ engOptions[eid] = Engines[eid]; }
+    admin.util.buildOption('#my_engine',engOptions,'');
+    /*渲染数据*/
+    table.render({
+        elem: '#mylink',
+        size: 'sm',
+        page: true,
+        limit: limit,
+        height: 'full-195',
+        url: app_root+"index?do=json",
+        cellExpandedMode:'tips',
+        cols: [[
+            {field:'lid',width:60,unresize:true,align:'center',title:'ID',sort:!0},
+            {field:"url",minWidth:260,title:"链接地址",templet:function(d){return '<a href="'+d.url+'" target="_blank" style="color:#01AAED">'+d.url+'</a>'}},
+            {field:"engine_name",width:100,align:'center',title:"引擎"},
+            {field:"guide_type",width:90,align:'center',title:"类型",templet:function(d){return d.guide_type==2 ? '<span style="color:#FF5722">301强引</span>' : '普通'}},
+            {field:"used",width:80,align:'center',title:"已引导",sort:!0},
+            {field:"surplus",width:80,align:'center',title:"剩余"},
+            {field:"cost_points",width:90,align:'center',title:"消耗积分"},
+            {field:"add_time",width:160,align:'center',title:"提交时间",templet:function(d){return d.add_time ? layui.util.toDateString(d.add_time*1000,'yyyy-MM-dd HH:mm:ss') : '-'}},
+            {field:'state',width:70,align:'center',templet:function(d){
+                if(d.state==1) return '<span style="color:#16B777">进行中</span>';
+                if(d.state==2) return '<span style="color:#999">已完成</span>';
+                if(d.state==3) return '<span style="color:#FFB800">已暂停</span>';
+                return d.state;
+            },unresize:true,title:'状态'},
+            {fixed:'right',width:110,align:'center',toolbar:'#mylink_tool',title:'操作'}
+        ]]
+    });
+    /*操作列模板*/
+    /*工具条监听*/
+    table.on('tool(mylink)', function(obj){
+        if(obj.event === 'pause'){
+            var toState = obj.data.state == 3 ? 0 : (obj.data.state == 1 ? 3 : 0);
+            admin.req(app_root+"pause",{lid:obj.data.lid,av:obj.data.state==3?1:0},function(res){
+                layer.msg(res.msg,{shade:[0.4,'#000'],time:1000},function(){
+                    if(res.code==1) table.reloadData('mylink');
+                });
+            },'post',{headersToken:true});
+        }else if(obj.event === 'del'){
+            layer.confirm('确定删除该链接吗？剩余额度与积分不予退还。',function(){
+                admin.req(app_root+"del",{lid:obj.data.lid},function(res){
+                    layer.msg(res.msg,{shade:[0.4,'#000'],time:1500},function(){
+                        if(res.code==1) table.reloadData('mylink');
+                    });
+                },'post',{headersToken:true});
+            });
+        }
+    });/**/
+});
+</script>
+<script type="text/html" id="mylink_tool">
+<div><a class="layui-btn layui-btn-xs layui-bg-blue" lay-event="pause">{{# if(d.state==3){ }}恢复{{# } else if(d.state==1){ }}暂停{{# } else { }}—{{# } }}</a><a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del">删除</a></div>
+</script>

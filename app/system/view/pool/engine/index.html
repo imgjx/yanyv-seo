@@ -1,0 +1,131 @@
+<div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-card-header">
+            <form class="layui-form render">
+                <div class="layui-form-item">
+                    <div class="layui-inline" style="width:180px;"><input type="text" name="kw" placeholder="引擎名称/标识" autocomplete="off" class="layui-input" lay-affix="clear"/></div>
+                    <div class="layui-inline">
+                        <div class="layui-btn-group">
+                            <button class="layui-btn" lay-submit lay-filter="search-engine"><i class="layui-icon layui-icon-search"></i> 搜索</button>
+                            <a class="layui-btn" lay-submit lay-filter="search-engine-all"><i class="layui-icon layui-icon-light"></i>全部</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="layui-card-body">
+            <div class="layui-card-box">
+                <div class="layui-btn-group">
+                    <a class="layui-btn" id="engine-add"><i class="layui-icon layui-icon-add-circle"></i> 添加引擎</a>
+                </div>
+            </div>
+            <table lay-filter="engine" id="engine"></table>
+        </div>
+    </div>
+</div>
+<!--JS部分-->
+<script type="text/javascript">
+layui.use(['buildItems'], function(){
+    var map_root = layui.cache.maps;
+    var app_root = map_root + 'pool.engine/';
+    var layer = layui.layer,table=layui.table,form=layui.form,admin=layui.admin;
+    var limit = {$limit};
+    var MM = {1:'仅UA',2:'仅IP',3:'IP+UA'};
+    /*渲染数据*/
+    table.render({
+        elem: '#engine',
+        size: 'sm',
+        page: true,
+        limit: limit,
+        height: 'full-235',
+        url: app_root+"index?do=json",
+        cols: [[
+            {field:'engine_id',width:60,unresize:true,align:'center',title:'ID',sort:!0},
+            {field:"name",title:"引擎名称",align:'center'},
+            {field:"mark",title:"标识",align:'center'},
+            {field:"match_mode",width:90,align:'center',title:"匹配模式",templet:function(d){return MM[d.match_mode]||'-'}},
+            {field:"price_normal",width:110,align:'center',title:"普通单价",templet:function(d){return d.price_normal+' 积分'}},
+            {field:"price_301",width:110,align:'center',title:"301强引单价",templet:function(d){return d.price_301>0 ? d.price_301+' 积分' : '未开启'}},
+            {field:"guide_options",minWidth:180,align:'center',title:"引导数选项",templet:function(d){return d.guide_options||'-'}},
+            {field:"listorder",width:70,edit:'text',align:'center',title:"排序"},
+            {field:'state',width:80,align:'center',templet:function(d){return '<input type="checkbox" name="state" lay-skin="switch" lay-text="启用|禁用" lay-filter="engine-chang" value="'+d.state+'" data-json="'+encodeURIComponent(JSON.stringify(d))+'"'+(d.state==1 ? ' checked' : '')+'>';},unresize:true,title:'状态'},
+            {fixed:'right',width:130,align:'center',toolbar:'<div><a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a><a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del">删除</a></div>',title:'操作'}
+        ]],
+        done: function(){ form.render('checkbox'); }
+    });
+    /*快编(排序)*/
+    table.on('edit(engine)',function(obj){
+        if(obj.field !== 'listorder') return;
+        var d = obj.data;
+        admin.req(app_root+"edit",{engine_id:d.engine_id,name:d.name,match_mode:d.match_mode,ua_keywords:d.ua_keywords||'',ip_rules:d.ip_rules||'',price_normal:d.price_normal,price_301:d.price_301,min_count:d.min_count,guide_options:d.guide_options||'',listorder:obj.value},function(res){
+            layer.msg(res.msg,{shade:[0.4,'#000'],time:800});
+        },'post',{headersToken:true});
+    });/**/
+    /*状态开关*/
+    form.on('switch(engine-chang)',function(obj){
+        var json = JSON.parse(decodeURIComponent($(this).data('json'))), value = obj.elem.checked ? 1 : 0;
+        admin.req(app_root+"edit",{engine_id:json.engine_id,name:json.name,match_mode:json.match_mode,ua_keywords:json.ua_keywords||'',ip_rules:json.ip_rules||'',price_normal:json.price_normal,price_301:json.price_301,min_count:json.min_count,guide_options:json.guide_options||'',listorder:json.listorder,state:value},function(res){
+            layer.tips(res.msg,obj.othis,{time:1000});
+            if(res.code === 0) obj.elem.checked = parseInt(obj.value);
+        },'post',{headersToken:true});
+    });/**/
+    /*顶部添加按钮*/
+    $('#engine-add').on('click',function(){engineOpen();});/**/
+    /*工具条监听*/
+    table.on('tool(engine)', function(obj){
+        if(obj.event === 'edit'){ engineOpen(obj.data); }
+        else if(obj.event === 'del'){
+            layer.confirm('确定要删除该引擎吗？删除后相关链接将无法再选择该引擎。',function(){
+                admin.req(app_root+"del",{engine_id:obj.data.engine_id},function(res){
+                    layer.msg(res.msg,{shade:[0.4,'#000'],time:1500},function(){
+                        if(res.code==1) table.reloadData('engine');
+                    });
+                },'post',{headersToken:true});
+            });
+        }
+    });/**/
+    /*弹出窗*/
+    function engineOpen(Dt){
+        admin.open({
+            type: 1,
+            bid: 'engine_items',
+            btn: ['保存', '取消'],
+            area: ['560px','640px'],
+            title: (Dt ? '编辑' : '添加') + 'SEO引擎',
+            success: function(lay,index){
+                layui.buildItems.build({
+                    bid: 'engine_items',
+                    data: [
+                        {name:"engine_id",type:"hidden"},
+                        {name:"name",title:"引擎名称",type:"text",value:'',verify:'required',placeholder:"如：百度/Bing/Google",must:true},
+                        {name:"mark",title:"引擎标识",type:"text",value:(Dt?Dt.mark:''),verify:Dt?'':'required',placeholder:"如 baidu（添加后不可修改）",must:!Dt},
+                        {name:"match_mode",title:"匹配模式",type:"select",value:(Dt?Dt.match_mode:1),must:true,options:{1:'仅UA识别',2:'仅IP识别',3:'IP+UA双重识别'}},
+                        {name:"ua_keywords",title:"UA关键词",type:"textarea",value:(Dt?Dt.ua_keywords:''),placeholder:"多个用英文逗号隔开，仅UA/IP+UA模式必填"},
+                        {name:"ip_rules",title:"IP规则库(.sbk)",type:"textarea",value:(Dt?Dt.ip_rules:''),placeholder:"每行一条，支持CIDR格式，如：116.179.32.0/19，仅IP/IP+UA模式必填"},
+                        {name:"price_normal",title:"普通引导单价",type:"number",value:(Dt?Dt.price_normal:0.01),verify:'required',placeholder:"积分/次",must:true},
+                        {name:"price_301",title:"301强引单价",type:"number",value:(Dt?Dt.price_301:0),placeholder:"填0表示该引擎不开启301强引"},
+                        {name:"guide_options",title:"引导数选项",type:"text",value:(Dt?(Dt.guide_options||''):'1000,3000,5000,10000'),verify:'required',placeholder:"用户提交链接时的可选引导次数，逗号隔开，如：1000,5000,10000",must:true},
+                        {name:"listorder",title:"排序编号",type:"number",value:(Dt?Dt.listorder:100)}
+                    ]
+                });
+                form.val('engine_items_form',Dt||{});
+                form.on('submit(engine_items)',function(data){
+                    var btn = $(this);
+                    if (btn.attr('stop')){return false}else{btn.attr('stop',1)}
+                    var post_url = data.field.engine_id ? app_root+'edit' : app_root+'add';
+                    admin.req(post_url,data.field,function(res){
+                        layer.msg(res.msg,{shade:[0.4,'#000'],time:1500},function(){
+                            if(res.code==1){
+                                layer.close(index);
+                                table.reloadData('engine');
+                            }
+                            btn.removeAttr('stop');
+                        });
+                    },'post',{headersToken:true});
+                    return false;
+                });
+            }
+        });
+    }/**/
+});
+</script>

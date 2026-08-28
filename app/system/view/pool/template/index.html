@@ -1,0 +1,112 @@
+<div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-card-header">
+            <form class="layui-form render">
+                <div class="layui-form-item">
+                    <div class="layui-inline" style="width:180px;"><input type="text" name="kw" placeholder="模板目录/标题" autocomplete="off" class="layui-input" lay-affix="clear"/></div>
+                    <div class="layui-inline">
+                        <div class="layui-btn-group">
+                            <button class="layui-btn" lay-submit lay-filter="search-pooltpl"><i class="layui-icon layui-icon-search"></i> 搜索</button>
+                            <a class="layui-btn" lay-submit lay-filter="search-pooltpl-all"><i class="layui-icon layui-icon-light"></i>全部</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="layui-card-body">
+            <div class="layui-card-box">
+                <div class="layui-btn-group">
+                    <a class="layui-btn" id="tpl-add"><i class="layui-icon layui-icon-add-circle"></i> 添加模板</a>
+                    <span class="layui-form-mid layui-word-aux">模板存储于 public/template/{模板目录}/，含 index.tpl 与 {模板目录}.conf，制作方法见该目录下 template.md</span>
+                </div>
+            </div>
+            <table lay-filter="pooltpl" id="pooltpl"></table>
+        </div>
+    </div>
+</div>
+<!--JS部分-->
+<script type="text/javascript">
+layui.use(['buildItems'], function(){
+    var map_root = layui.cache.maps;
+    var app_root = map_root + 'pool.template/';
+    var layer = layui.layer,table=layui.table,form=layui.form,admin=layui.admin;
+    var limit = {$limit};
+    /*渲染数据*/
+    table.render({
+        elem: '#pooltpl',
+        size: 'sm',
+        page: true,
+        limit: limit,
+        height: 'full-235',
+        url: app_root+"index?do=json",
+        cols: [[
+            {field:'tid',width:60,unresize:true,align:'center',title:'ID',sort:!0},
+            {field:"name",title:"模板目录",width:110,align:'center',templet:function(d){ return d.exists ? d.name : '<span style="color:#FF5722">'+d.name+'（目录丢失）</span>'; }},
+            {field:"title",title:"显示名(.conf)",align:'center'},
+            {field:"files",minWidth:150,title:"模板文件"},
+            {field:"routes",minWidth:200,title:"路由规则(.conf)",templet:function(d){
+                var lines = (d.routes||'').split(/\n+/).filter(function(v){return $.trim(v)}).length;
+                if(!lines) return '<span style="color:#999">无（全部走 index.tpl）</span>';
+                var html = $.map((d.routes||'').split(/\n+/).filter(function(v){return $.trim(v)}).slice(0,3),function(v){return '<div>'+layui.util.escape($.trim(v))+'</div>'}).join('');
+                return html + (lines>3 ? '<div style="color:#999">…共'+lines+'条</div>' : '');
+            }},
+            {field:"creator",width:80,align:'center',title:"创建人"},
+            {field:"add_time",width:150,align:'center',title:"创建时间",templet:function(d){return d.add_time ? layui.util.toDateString(d.add_time*1000,'yyyy-MM-dd HH:mm:ss') : '-'}},
+            {fixed:'right',width:130,align:'center',toolbar:'<div><a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a><a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del">删除</a></div>',title:'操作'}
+        ]]
+    });
+    /*顶部添加按钮*/
+    $('#tpl-add').on('click',function(){tplOpen();});/**/
+    /*工具条监听*/
+    table.on('tool(pooltpl)', function(obj){
+        if(obj.event === 'edit'){ tplOpen(obj.data); }
+        else if(obj.event === 'del'){
+            layer.confirm('确定要删除该模板登记吗？（不会删除 public/template/ 下的目录与文件）',function(){
+                admin.req(app_root+"del",{tid:obj.data.tid},function(res){
+                    layer.msg(res.msg,{shade:[0.4,'#000'],time:1500},function(){
+                        if(res.code==1) table.reloadData('pooltpl');
+                    });
+                },'post',{headersToken:true});
+            });
+        }
+    });/**/
+    /*弹出窗*/
+    function tplOpen(Dt){
+        admin.open({
+            type: 1,
+            bid: 'tpl_items',
+            btn: ['保存', '取消'],
+            area: ['620px','520px'],
+            title: (Dt ? '编辑' : '添加') + '站群模板',
+            success: function(lay,index){
+                layui.buildItems.build({
+                    bid: 'tpl_items',
+                    data: [
+                        {name:"tid",type:"hidden"},
+                        {name:"name",title:"模板目录",type:"text",value:(Dt?Dt.name:''),verify:Dt?'':'required',placeholder:"2-20位字母或数字，添加后不可修改",must:!Dt,tips:"系统将在 public/template/ 下创建同名目录并生成示例 index.tpl 与 .conf"+(Dt?'（已存在，仅可通过代码编辑器修改文件）':'')},
+                        {name:"title",title:"模板显示名",type:"text",value:(Dt?Dt.title:''),verify:'required',placeholder:"保存在 .conf 中，站点选择器里显示的名称",must:true},
+                        {name:"remark",title:"备注说明",type:"textarea",value:(Dt?Dt.remark:''),placeholder:"选填"},
+                        {name:"routes",title:"路由规则",type:"textarea",value:(Dt?(Dt.routes||''):''),tips:"每行一条：正则 => 模板文件?id=$1；模板用ThinkPHP语法(.tpl)，例 /post/(\\d+) => post?id=$1 把 /post/11 路由到 post.tpl 并赋值 $id=11"}
+                    ]
+                });
+                form.val('tpl_items_form',Dt||{});
+                form.on('submit(tpl_items)',function(data){
+                    var btn = $(this);
+                    if (btn.attr('stop')){return false}else{btn.attr('stop',1)}
+                    var post_url = data.field.tid ? app_root+'edit' : app_root+'add';
+                    admin.req(post_url,data.field,function(res){
+                        layer.msg(res.msg,{shade:[0.4,'#000'],time:1500},function(){
+                            if(res.code==1){
+                                layer.close(index);
+                                table.reloadData('pooltpl');
+                            }
+                            btn.removeAttr('stop');
+                        });
+                    },'post',{headersToken:true});
+                    return false;
+                });
+            }
+        });
+    }/**/
+});
+</script>

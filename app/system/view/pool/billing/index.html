@@ -1,0 +1,59 @@
+<div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-card-header">
+            <form class="layui-form render">
+                <div class="layui-form-item">
+                    <div class="layui-inline" style="width:180px;"><input type="text" name="kw" placeholder="蜘蛛IP/UA关键词" autocomplete="off" class="layui-input" lay-affix="clear"/></div>
+                    <div class="layui-inline" style="width:100px;"><input type="number" name="userid" placeholder="用户ID" autocomplete="off" class="layui-input" lay-affix="clear"/></div>
+                    <div class="layui-inline" style="width:200px;"><input type="text" name="sotime" date-render placeholder="引导时间" class="layui-input" lay-affix="clear"/></div>
+                    <div class="layui-inline">
+                        <div class="layui-btn-group">
+                            <button class="layui-btn" lay-submit lay-filter="search-billinglog"><i class="layui-icon layui-icon-search"></i> 搜索</button>
+                            <a class="layui-btn" lay-submit lay-filter="search-billinglog-all"><i class="layui-icon layui-icon-light"></i>全部</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="layui-card-body">
+            <!--统计概览-->
+            <div class="layui-row layui-col-space10" style="margin-bottom:10px;">
+                <div class="layui-col-md4"><div class="layui-card" style="background:#f8f8f8;"><div class="layui-card-body" style="text-align:center;">今日引导次数<br/><b style="color:#01AAED;font-size:22px;">{$sumToday}</b></div></div></div>
+                <div class="layui-col-md4"><div class="layui-card" style="background:#f8f8f8;"><div class="layui-card-body" style="text-align:center;">今日扣减积分<br/><b style="color:#FF5722;font-size:22px;">{$pointsToday|dround}</b></div></div></div>
+                <div class="layui-col-md4"><div class="layui-card" style="background:#f8f8f8;"><div class="layui-card-body" style="text-align:center;">累计引导次数<br/><b style="color:#16B777;font-size:22px;">{$sumTotal}</b></div></div></div>
+            </div>
+            <table lay-filter="billinglog" id="billinglog"></table>
+        </div>
+    </div>
+</div>
+<!--JS部分-->
+<script type="text/javascript">
+layui.use([], function(){
+    var map_root = layui.cache.maps;
+    var app_root = map_root + 'pool.billing/';
+    var table=layui.table,form=layui.form;
+    var limit = {$limit};
+    /*渲染数据*/
+    table.render({
+        elem: '#billinglog',
+        size: 'sm',
+        page: true,
+        limit: limit,
+        height: 'full-345',
+        url: app_root+"index?do=json",
+        cellExpandedMode:'tips',
+        cols: [[
+            {field:'bid',width:70,unresize:true,align:'center',title:'ID',sort:!0},
+            {field:"userid",width:80,align:'center',title:"用户ID"},
+            {field:"engine_name",width:110,align:'center',title:"搜索引擎"},
+            {field:"site_domain",minWidth:150,align:'center',title:"来源站点",templet:function(d){return d.site_domain||'-'}},
+            {field:"guide_type",width:90,align:'center',title:"类型",templet:function(d){return d.guide_type==2 ? '<span style="color:#FF5722">302强引</span>' : '普通'}},
+            {field:"points",width:90,align:'center',title:"扣减积分",sort:!0,templet:function(d){return '<span style="color:#FF5722">-'+d.points+'</span>'}},
+            {field:"spider_ip",width:120,align:'center',title:"蜘蛛IP"},
+            {field:"spider_ua",minWidth:200,title:"蜘蛛UA"},
+            {field:"add_time",width:160,align:'center',title:"时间",templet:function(d){return d.add_time ? layui.util.toDateString(d.add_time*1000,'yyyy-MM-dd HH:mm:ss') : '-'}}
+        ]]
+    });
+    /*搜索按钮(自动reload约定：lay-filter="search-billinglog"/"search-billinglog-all")*/
+});
+</script>

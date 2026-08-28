@@ -1,0 +1,135 @@
+<div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-card-header">
+            <form class="layui-form render">
+                <div class="layui-form-item">
+                    <div class="layui-inline" style="width:180px;"><input type="text" name="kw" placeholder="站点名称/泛解析域名" autocomplete="off" class="layui-input" lay-affix="clear"/></div>
+                    <div class="layui-inline">
+                        <div class="layui-btn-group">
+                            <button class="layui-btn" lay-submit lay-filter="search-poolsite"><i class="layui-icon layui-icon-search"></i> 搜索</button>
+                            <a class="layui-btn" lay-submit lay-filter="search-poolsite-all"><i class="layui-icon layui-icon-light"></i>全部</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="layui-card-body">
+            <div class="layui-card-box">
+                <div class="layui-btn-group">
+                    <a class="layui-btn" id="site-add"><i class="layui-icon layui-icon-add-circle"></i> 添加站点</a>
+                </div>
+            </div>
+            <table lay-filter="poolsite" id="poolsite"></table>
+        </div>
+    </div>
+</div>
+<!--JS部分-->
+<script type="text/javascript">
+layui.use(['buildItems'], function(){
+    var map_root = layui.cache.maps;
+    var app_root = map_root + 'pool.site/';
+    var layer = layui.layer,table=layui.table,form=layui.form,admin=layui.admin;
+    var limit = {$limit};
+    var TplList = {$tplList|raw};
+    /*模板下拉选项*/
+    var tplOptions = {'0':'不使用模板'};
+    for(var tid in TplList){ tplOptions[tid] = TplList[tid]; }
+    /*渲染数据*/
+    table.render({
+        elem: '#poolsite',
+        size: 'sm',
+        page: true,
+        limit: limit,
+        height: 'full-235',
+        url: app_root+"index?do=json",
+        cols: [[
+            {field:'siteid',width:60,unresize:true,align:'center',title:'ID',sort:!0},
+            {field:"title",title:"站点名称",align:'center'},
+            {field:"domain",minWidth:160,title:"绑定域名",templet:function(d){return '<span title="'+d.domain+'">'+d.domain+'</span>'}},
+            {field:"template_id",width:120,align:'center',title:"模板",templet:function(d){return TplList[d.template_id] || '未绑定'}},
+            {field:"ratio_301",width:90,edit:'text',align:'center',title:"302占比%"},
+            {field:"weight",width:70,edit:'text',align:'center',title:"权重"},
+            {field:"cache_hours",width:80,edit:'text',align:'center',title:"缓存/h"},
+            {field:"spider_show",width:90,align:'center',title:"蜘蛛可见",templet:function(d){return d.spider_show==1 ? '仅蜘蛛' : '所有人'}},
+            {field:'state',width:80,align:'center',templet:function(d){return '<input type="checkbox" name="state" lay-skin="switch" lay-text="启用|禁用" lay-filter="site-chang" value="'+d.state+'" data-json="'+encodeURIComponent(JSON.stringify(d))+'"'+(d.state==1 ? ' checked' : '')+'>';},unresize:true,title:'状态'},
+            {fixed:'right',width:130,align:'center',toolbar:'<div><a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a><a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del">删除</a></div>',title:'操作'}
+        ]],
+        done: function(){ form.render('checkbox'); }
+    });
+    /*快编*/
+    table.on('edit(poolsite)',function(obj){
+        var af = obj.field, allow = {ratio_301:'ratio_301',weight:'weight',cache_hours:'cache_hours'};
+        if(!allow[af]) return;
+        admin.req(app_root+"edit?do=up",{siteid:obj.data.siteid,av:obj.value,af:af},function(res){
+            layer.msg(res.msg,{shade:[0.4,'#000'],time:800});
+        },'post',{headersToken:true});
+    });/**/
+    /*状态开关*/
+    form.on('switch(site-chang)',function(obj){
+        var json = JSON.parse(decodeURIComponent($(this).data('json'))), value = obj.elem.checked ? 1 : 0;
+        admin.req(app_root+"edit?do=up",{siteid:json.siteid,av:value,af:'state'},function(res){
+            layer.tips(res.msg,obj.othis,{time:1000});
+            if(res.code === 0) obj.elem.checked = parseInt(obj.value);
+        },'post',{headersToken:true});
+    });/**/
+    /*顶部添加按钮*/
+    $('#site-add').on('click',function(){siteOpen();});/**/
+    /*工具条监听*/
+    table.on('tool(poolsite)', function(obj){
+        if(obj.event === 'edit'){ siteOpen(obj.data); }
+        else if(obj.event === 'del'){
+            layer.confirm('确定要删除该站点吗？该站点的链接投放记录将保留。',function(){
+                admin.req(app_root+"del",{siteid:obj.data.siteid},function(res){
+                    layer.msg(res.msg,{shade:[0.4,'#000'],time:1500},function(){
+                        if(res.code==1) table.reloadData('poolsite');
+                    });
+                },'post',{headersToken:true});
+            });
+        }
+    });/**/
+    /*弹出窗*/
+    function siteOpen(Dt){
+        admin.open({
+            type: 1,
+            bid: 'site_items',
+            btn: ['保存', '取消'],
+            area: ['560px','660px'],
+            title: (Dt ? '编辑' : '添加') + '站群站点',
+            success: function(lay,index){
+                layui.buildItems.build({
+                    bid: 'site_items',
+                    data: [
+                        {name:"siteid",type:"hidden"},
+                        {name:"title",title:"站点名称",type:"text",value:'',verify:'required',placeholder:"请输入站点名称",must:true},
+                        {name:"domain",title:"绑定域名",type:"text",value:(Dt?Dt.domain:''),verify:'required',placeholder:"支持泛解析，如：*.abc.com 或 abc.com",tips:"精确匹配 abc.com；泛解析填写 *.abc.com，任意子域名都会命中该站点。需在域名服务商处做好泛解析 A 记录指向本服务器",must:true},
+                        {name:"template_id",title:"站群模板",type:"select",value:(Dt?Dt.template_id:0),options:tplOptions,tips:"模板文件位于 public/模板目录/*.tpl"},
+                        {name:"ratio_301",title:"302强引占比%",type:"number",value:(Dt?Dt.ratio_301:100),placeholder:"0-100，蜘蛛命中时按此概率执行302强引",tips:"每个站点独立的302强引占比配置，100表示全部强引"},
+                        {name:"weight",title:"轮询权重",type:"number",value:(Dt?Dt.weight:1),placeholder:"数值越大被选中概率越高"},
+                        {name:"real_ip_head",title:"Real-IP头",type:"text",value:(Dt?Dt.real_ip_head:'X-Forwarded-For'),placeholder:"默认 X-Forwarded-For",tips:"识别搜索引擎真实IP所读取的头，可留空直接取客户端IP"},
+                        {name:"cms_url",title:"CMS内容源",type:"text",value:(Dt?Dt.cms_url:''),placeholder:"如：https://xxx.com/api/content（留空不抓取）"},
+                        {name:"cms_rules",title:"抓取正则规则",type:"textarea",value:(Dt?Dt.cms_rules:''),placeholder:"每行一条正则，命名分组内容将注入模板变量，如：/<h1>(?P<Content>.*?)<\\/h1>/is"},
+                        {name:"cache_hours",title:"CMS缓存(小时)",type:"number",value:(Dt?Dt.cache_hours:24),placeholder:"抓取结果缓存小时数"},
+                        {name:"spider_show",title:"单次展示链接数",type:"number",value:(Dt?Dt.spider_show:10),placeholder:"每次蜘蛛访问页面输出的投放链接条数"},
+                    ]
+                });
+                form.val('site_items_form',Dt||{});
+                form.on('submit(site_items)',function(data){
+                    var btn = $(this);
+                    if (btn.attr('stop')){return false}else{btn.attr('stop',1)}
+                    var post_url = data.field.siteid ? app_root+'edit' : app_root+'add';
+                    admin.req(post_url,data.field,function(res){
+                        layer.msg(res.msg,{shade:[0.4,'#000'],time:1500},function(){
+                            if(res.code==1){
+                                layer.close(index);
+                                table.reloadData('poolsite');
+                            }
+                            btn.removeAttr('stop');
+                        });
+                    },'post',{headersToken:true});
+                    return false;
+                });
+            }
+        });
+    }/**/
+});
+</script>
