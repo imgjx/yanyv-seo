@@ -1,0 +1,61 @@
+<style>
+#ai_task_box{padding:20px 25px;}
+#ai_task_box .task-progress{margin:10px 0 20px;}
+#ai_task_box .task-stat{margin-bottom:15px;color:#666;}
+#ai_task_box .task-stat b{color:#1E9FFF;margin:0 4px;}
+#ai_task_log{background:#1e1e1e;color:#9fd58b;font:12px/1.9 Consolas,Menlo,monospace;padding:12px 15px;height:360px;overflow:auto;border-radius:4px;white-space:pre-wrap;word-break:break-all;}
+</style>
+<div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-card-header" id="ai_task_title">AI任务执行中</div>
+        <div class="layui-card-body" id="ai_task_box">
+            <div class="task-stat" id="ai_task_stat"></div>
+            <div class="layui-progress layui-progress-big" lay-showpercent="true" lay-filter="ai_task_bar">
+                <div class="layui-progress-bar layui-bg-blue" lay-percent="0%"></div>
+            </div>
+            <div class="task-progress"></div>
+            <div id="ai_task_log">正在启动任务…</div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+layui.use(['element'], function(){
+    var $ = layui.$, element = layui.element, layer = layui.layer;
+    var taskid = {$taskid};
+    var type = '{$type}';
+    var root = '{$root}';
+    var running = false, timer = null;
+    var titleMap = {gen:'AI生成任务', rewrite:'AI重写任务', tpl:'AI模板任务'};
+    $('#ai_task_title').text(titleMap[type] || 'AI任务执行中');
+    function render(st){
+        var total = st.total || 0, done = st.done || 0, fail = st.fail || 0;
+        var pct = total ? Math.round((done + fail) / total * 100) : 0;
+        element.progress('ai_task_bar', pct + '%');
+        $('#ai_task_stat').html('总任务 <b>'+total+'</b> 篇，已成功 <b>'+done+'</b> 篇，失败 <b style="color:#FF5722">'+fail+'</b> 篇');
+        var logs = (st.logs || '').split('\n').slice(-60).join('\n');
+        var box = $('#ai_task_log');
+        box.text(logs || '处理中…');
+        box.scrollTop(box.prop('scrollHeight'));
+        if(st.state == 1){
+            stop();
+            $('#ai_task_title').html(type === 'rewrite' ? 'AI重写任务 <span style="color:#16B777;">已完成</span>' : 'AI生成任务 <span style="color:#16B777;">已完成</span>');
+            element.progress('ai_task_bar', '100%');
+        }
+    }
+    function step(){
+        if(running) return;
+        running = true;
+        layui.admin.req(layui.cache.maps + root + 'step', {taskid: taskid}, function(res){
+            running = false;
+            if(res.code == 1){ render(res.data.task); }
+            else{
+                stop();
+                $('#ai_task_log').text('任务异常：' + res.msg);
+            }
+        }, 'post', {headersToken:true, timeout:600000});
+    }
+    function stop(){ if(timer){ clearInterval(timer); timer = null; } }
+    timer = setInterval(step, 1500);
+    step();
+});
+</script>

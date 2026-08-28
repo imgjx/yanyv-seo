@@ -24,6 +24,7 @@
             <div class="layui-card-box">
                 <div class="layui-btn-group">
                     <a class="layui-btn" id="cmsarticle-add"><i class="layui-icon layui-icon-add-circle"></i> 添加文章</a>
+                    <a class="layui-btn layui-btn-normal" id="cmsarticle-rewrite"><i class="layui-icon layui-icon-engine"></i> 重写文章</a>
                 </div>
                 <span class="layui-form-mid layui-word-aux" style="margin-left:15px;">文章按所属分组的伪原创词库实时替换后输出到站群模板</span>
             </div>
@@ -112,19 +113,26 @@ layui.use(['buildItems'], function(){
         },'post',{headersToken:true});
     }/**/
     $('#cmsarticle-add').on('click',function(){articleOpen();});/**/
-    /*AI批量重写*/
+    /*AI批量重写：创建任务后打开状态页*/
     $('#cmsarticle-rewrite').on('click',function(){
         var rows = table.checkStatus('cmsarticle').data;
-        if(rows.length === 0) return layer.msg('请先勾选需要AI重写的文章');
+        if(rows.length === 0) return layer.msg('请先勾选需要重写的文章');
         var ids = rows.map(function(d){return d.articleid;});
-        layer.confirm('确定对所选 '+ids.length+' 篇文章执行AI重写吗？重写后原标题与正文将被替换。',function(i){
+        layer.confirm('确定对所选 '+ids.length+' 篇文章执行AI重写吗？重写后原标题与正文将被替换为结构完全不同的新文章。',function(i){
             layer.close(i);
-            var load = layer.load(2);
             admin.req(layui.cache.maps + 'cms.ai/rewrite',{ids:ids,concurrency:3},function(res){
-                layer.close(load);
-                layer.msg(res.code==1 ? res.data.msg : res.msg,{shade:[0.4,'#000'],time:4000});
-                if(res.code==1) table.reloadData('cmsarticle');
-            },'post',{headersToken:true,timeout:600000});
+                if(res.code==1){
+                    admin.open({
+                        type: 2,
+                        title: 'AI重写任务',
+                        area: ['760px','640px'],
+                        url: layui.cache.maps + 'cms.ai/status?taskid=' + res.data.taskid,
+                        end: function(){ table.reloadData('cmsarticle'); }
+                    });
+                }else{
+                    layer.msg(res.msg);
+                }
+            },'post',{headersToken:true});
         });
     });/**/
     table.on('tool(cmsarticle)', function(obj){

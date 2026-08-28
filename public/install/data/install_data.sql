@@ -219,7 +219,7 @@ CREATE TABLE `vt_system_menus` (
   `upd_time` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '修改时间',
   `del_time` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '删除时间',
   PRIMARY KEY (`menuid`)
-) ENGINE=InnoDB AUTO_INCREMENT=150 DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC COMMENT='菜单权限';
+) ENGINE=InnoDB AUTO_INCREMENT=155 DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC COMMENT='菜单权限';
 
 -- Records of vt_system_menus
 -- ----------------------------
@@ -369,10 +369,11 @@ INSERT INTO `vt_system_menus` VALUES ('145', '1', '', '财务记录', '财务记
 INSERT INTO `vt_system_menus` VALUES ('146', '1', '', '个人中心', '个人中心', '', 'system.manager/index?action=info', 'system.manager/index/info,system.manager/changpwd,system.manager/edits', 'layui-icon-vercode', '140', '6', '1', '1', '1', 'admin', '', '1700289715', '0', '0');
 INSERT INTO `vt_system_menus` VALUES ('147', '1', '', '内容管理', '内容管理', '', '', '', 'layui-icon-read', '0', '7', '1', '1', '1', 'admin', '', '1700289715', '0', '0');
 INSERT INTO `vt_system_menus` VALUES ('148', '1', '', '文章分组', '文章分组', '', 'cms.group/index', 'cms.group/index,cms.group/json,cms.group/save,cms.group/del,cms.group/crawl', 'layui-icon-cols', '147', '1', '1', '1', '1', 'admin', '', '1700289715', '0', '0');
-INSERT INTO `vt_system_menus` VALUES ('149', '1', '', '文章管理', '文章管理', '', 'cms.article/index', 'cms.article/index,cms.article/json,cms.article/save,cms.article/del,cms.article/view,cms.ai/rewrite', 'layui-icon-list', '147', '2', '1', '1', '1', 'admin', '', '1700289715', '0', '0');
-INSERT INTO `vt_system_menus` VALUES ('150', '1', '', 'AI内容生成', 'AI内容生成', '', 'cms.ai/index', 'cms.ai/index,cms.ai/gen,cms.ai/rewrite', 'layui-icon-engine', '147', '3', '1', '1', '1', 'admin', '', '1700289715', '0', '0');
-INSERT INTO `vt_system_menus` VALUES ('152', '1', '', 'AI模板', 'AI模板', '', 'pool.aitpl/index', 'pool.aitpl/index,pool.aitpl/gen', 'layui-icon-engine', '130', '7', '1', '1', '1', 'admin', '', '1700289715', '0', '0');
+INSERT INTO `vt_system_menus` VALUES ('149', '1', '', '文章管理', '文章管理', '', 'cms.article/index', 'cms.article/index,cms.article/json,cms.article/save,cms.article/del,cms.article/view,cms.ai/rewrite,cms.ai/status,cms.ai/step,cms.ai/state', 'layui-icon-list', '147', '2', '1', '1', '1', 'admin', '', '1700289715', '0', '0');
+INSERT INTO `vt_system_menus` VALUES ('150', '1', '', 'AI内容生成', 'AI内容生成', '', 'cms.ai/index', 'cms.ai/index,cms.ai/gen,cms.ai/status,cms.ai/step,cms.ai/state,cms.ai/save,cms.ai/prompt,cms.ai/saveRewrite,cms.ai/rewrite', 'layui-icon-engine', '147', '3', '1', '1', '1', 'admin', '', '1700289715', '0', '0');
+INSERT INTO `vt_system_menus` VALUES ('152', '1', '', 'AI模板', 'AI模板', '', 'pool.aitpl/index', 'pool.aitpl/index,pool.aitpl/gen,pool.aitpl/status,pool.aitpl/step', 'layui-icon-engine', '130', '7', '1', '1', '1', 'admin', '', '1700289715', '0', '0');
 INSERT INTO `vt_system_menus` VALUES ('153', '1', '', 'AI配置', 'AI配置', '', 'system.ai/index', 'system.ai/index,system.ai/save', 'layui-icon-engine', '2', '14', '1', '1', '1', '', '', '1700289715', '0', '0');
+INSERT INTO `vt_system_menus` VALUES ('154', '1', '', '文章重写提示词', '文章重写提示词', '', 'cms.ai/prompt', 'cms.ai/prompt,cms.ai/saveRewrite', 'layui-icon-edit', '147', '4', '1', '1', '1', 'admin', '', '1700289715', '0', '0');
 
 
 -- ----------------------------
@@ -494,7 +495,7 @@ CREATE TABLE `vt_system_setting` (
   PRIMARY KEY (`id`),
   KEY `addon` (`addon`) USING BTREE,
   KEY `group` (`group`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=56 DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC COMMENT='系统配置';
+) ENGINE=InnoDB AUTO_INCREMENT=63 DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC COMMENT='系统配置';
 
 -- Records of vt_system_setting
 -- ----------------------------
@@ -575,9 +576,6 @@ INSERT INTO `vt_system_setting` VALUES ('38', 'secret_id', 'SecretId', 'upload',
 INSERT INTO `vt_system_setting` VALUES ('39', 'qcloud_secret_key', 'SecretKey', 'upload', 'text', '', '', '腾讯云COS SecretKey', 'up_qcloud', '1', '21', '', '1', '', '', '1475240646', '0', '0');
 INSERT INTO `vt_system_setting` VALUES ('40', 'qcloud_domain', '空间域名 Domain', 'upload', 'text', '', '', '腾讯云COS 请补全http:// 或 https://，例如：http://v.abc.com', 'up_qcloud', '0', '22', '', '1', '', '', '1475240646', '0', '0');
 INSERT INTO `vt_system_setting` VALUES ('41', 'aliyun_endpoint', '上传节点 Endpoint', 'upload', 'text', '', '', '如：https://oss-cn-beijing.aliyuncs.com，不设则按空间域名配置，也可以用内网域名（如：ECS同地域时）', 'up_aliyun', '0', '17', '', '1', '', '', '1475240646', '0', '0');
-INSERT INTO `vt_system_setting` VALUES ('42', 'sys_author', '作者', 'system', 'text', '嗷呜awa', '', '系统作者', '', '0', '2', '', '1', '', '', '1475240646', '0', '0');
-INSERT INTO `vt_system_setting` VALUES ('43', 'sys_site', '官网地址', 'system', 'text', '', '', '系统官网地址', '', '0', '2', '', '1', '', '', '1475240646', '0', '0');
-INSERT INTO `vt_system_setting` VALUES ('44', 'sys_source', '开源地址', 'system', 'text', '', '', '系统开源仓库地址', '', '0', '2', '', '1', '', '', '1475240646', '0', '0');
 INSERT INTO `vt_system_setting` VALUES ('45', 'sys_copyright', '页脚版权', 'system', 'text', 'Copyright (C) 2026 YanyvSEO All Rights Reserved.', '', '前台/后台页脚显示的版权信息', '', '0', '2', '', '1', '', '', '1475240646', '0', '0');
 INSERT INTO `vt_system_setting` VALUES ('47', 'pool_pay_api', '易支付接口', 'system', 'text', '', '', '易支付兼容API提交地址,如 https://pay.example.com/', '', '0', '21', '', '1', '', '', '1475240646', '0', '0');
 INSERT INTO `vt_system_setting` VALUES ('48', 'pool_pay_pid', '商户PID', 'system', 'text', '', '', '易支付商户ID', '', '0', '22', '', '1', '', '', '1475240646', '0', '0');
@@ -593,6 +591,14 @@ INSERT INTO `vt_system_setting` VALUES ('52', 'pool_fixed_amounts', '固定金�
 INSERT INTO `vt_system_setting` VALUES ('53', 'pool_pay_min', '最低充值金额', 'system', 'number', '1', '', '元,自定义金额模式的下限', '', '0', '27', '', '1', '', '', '1475240646', '0', '0');
 INSERT INTO `vt_system_setting` VALUES ('54', 'pool_pay_max', '最高充值金额', 'system', 'number', '10000', '', '元,自定义金额模式的上限', '', '0', '28', '', '1', '', '', '1475240646', '0', '0');
 INSERT INTO `vt_system_setting` VALUES ('55', 'pool_user_site', '用户自选站群', 'system', 'switch', '1', '', '是否允许用户提交链接时自行选择投放站群（关闭则强制全站轮询）', '', '0', '29', '', '1', 'admin', '', '1787830514', '0', '0');
+INSERT INTO `vt_system_setting` VALUES ('56', 'ai_api_url', 'API地址', 'ai', 'text', '', '', 'OpenAI兼容接口地址，如 https://api.openai.com/v1', '', '0', '1', '', '1', 'admin', '', '1787830514', '0', '0');
+INSERT INTO `vt_system_setting` VALUES ('57', 'ai_api_key', 'API密钥', 'ai', 'password', '', '', '接口访问密钥 sk-xxx', '', '0', '2', '', '1', 'admin', '', '1787830514', '0', '0');
+INSERT INTO `vt_system_setting` VALUES ('58', 'ai_model', '模型名称', 'ai', 'text', '', '', '如 gpt-4o-mini / glm-4-flash', '', '0', '3', '', '1', 'admin', '', '1787830514', '0', '0');
+INSERT INTO `vt_system_setting` VALUES ('59', 'ai_temperature', '采样温度', 'ai', 'number', '0.7', '', '0-2，越大越发散', '', '0', '4', '', '1', 'admin', '', '1787830514', '0', '0');
+INSERT INTO `vt_system_setting` VALUES ('60', 'ai_article_prompt', 'AI文章提示词', 'ai', 'textarea', '', '', 'AI内容生成默认提示词，{date}=当前年月日；留空使用内置模板', '', '0', '5', '', '1', 'admin', '', '1787830514', '0', '0');
+INSERT INTO `vt_system_setting` VALUES ('61', 'ai_no_stream', '不使用流式请求', 'ai', 'radio', '1', '1:开启
+0:关闭(使用流式)', '开启后AI请求不使用流式方式；若网关强制要求流式(思考模型)会自动降级为流式重试', '', '0', '6', '', '1', 'admin', '', '1787830514', '0', '0');
+INSERT INTO `vt_system_setting` VALUES ('62', 'ai_rewrite_prompt', '文章重写提示词', 'ai', 'textarea', '', '', '文章管理->重写文章 使用的提示词模板，{content}=原文正文，{date}=当前年月日；留空使用内置模板', '', '0', '7', '', '1', 'admin', '', '1787830514', '0', '0');
 
 
 -- ----------------------------
@@ -861,6 +867,29 @@ CREATE TABLE `vt_cms_article` (
   KEY `groupid` (`groupid`,`state`),
   KEY `title` (`title`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC COMMENT='CMS文章';
+
+-- ----------------------------
+-- Table structure for vt_cms_aitask
+-- ----------------------------
+CREATE TABLE `vt_cms_aitask` (
+  `taskid` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '任务ID',
+  `type` varchar(10) NOT NULL DEFAULT 'gen' COMMENT '任务类型gen生成rewrite重写tpl模板',
+  `groupid` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '保存分组ID',
+  `ids` text COMMENT '重写文章ID集合(JSON)',
+  `prompt` text COMMENT '提示词/任务参数(JSON)',
+  `concurrency` tinyint(3) unsigned NOT NULL DEFAULT '3' COMMENT '并发数',
+  `total` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '总任务数',
+  `done` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '已完成数',
+  `fail` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '失败数',
+  `offset` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '已处理偏移',
+  `logs` text COMMENT '进度日志',
+  `state` tinyint(1) NOT NULL DEFAULT '0' COMMENT '状态0进行中1完成',
+  `add_time` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '创建时间',
+  `upd_time` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '更新时间',
+  `del_time` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '删除时间',
+  PRIMARY KEY (`taskid`),
+  KEY `state` (`state`,`type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC COMMENT='AI文章任务';
 
 -- ----------------------------
 -- Records of vt_pool_engine

@@ -23,16 +23,16 @@ class Pay extends BaseController
         $d = $this->request->param();
         $key = vconfig('pool_pay_key');
         if(!$key || empty($d['out_trade_no'])) return $this->echoNotify('fail');
-        //易支付验签规则：按ASCII升序排列非空参数 key=value 以 & 连接后拼接 KEY 取 md5 大写
-        $sign = strval($d['sign'] ?? '');
+        //易支付V1验签：参数按ASCII升序排列，sign/sign_type与空值不参与，md5(a=b&c=d...+KEY)小写
+        $sign = strtolower(strval($d['sign'] ?? ''));
         unset($d['sign'], $d['sign_type']);
         ksort($d, SORT_STRING);
         $str = '';
         foreach($d as $k => $v){
-            if($v === '' || is_array($v)) continue;
+            if($v === '' || $v === null || is_array($v)) continue;
             $str .= ($str ? '&' : '').$k.'='.$v;
         }
-        if(strtoupper(md5($str.$key)) !== strtoupper($sign)) return $this->echoNotify('fail');
+        if(md5($str.$key) !== $sign) return $this->echoNotify('fail');
         if(strval($d['trade_status'] ?? '') != 'TRADE_SUCCESS') return $this->echoNotify('success');
         $rs = RCM::one(['orderid'=>strval($d['out_trade_no'])]);
         if(!$rs) return $this->echoNotify('fail');

@@ -33,7 +33,7 @@ class Index extends \app\BaseController
             $re = Response::create($home, 'view')->assign([
                 'site'      => vconfig('site_title','YanyvSEO'),
                 'copyright' => vconfig('sys_copyright','Copyright (C) 2026 YanyvSEO All Rights Reserved.'),
-                'author'    => vconfig('sys_author','嗷呜awa'),
+                'author'    => vconfig('sys_author',''),
                 'sys_site'  => vconfig('sys_site',''),
                 'sys_source'=> vconfig('sys_source',''),
             ])->header();

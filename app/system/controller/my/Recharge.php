@@ -82,29 +82,33 @@ class Recharge extends AdminBase
             'userid'   => $this->manUser['userid'],
             'money'    => $money,
             'points'   => $points,
-            'paytype'  => in_array(strval($d['type']), ['alipay','wxpay','qqpay']) ? $d['type'] : '',
+            'paytype'  => in_array(strval($d['type']), ['alipay','wxpay','qqpay','bank','jdpay','paypal']) ? $d['type'] : '',
             'status'   => 0,
             'add_time' => time(),
         ]);
-        //组装易支付提交参数并签名（按ASCII升序）
+        //组装易支付提交参数并签名（V1：ASCII升序、空值不参与、md5小写）
         $host = $this->request->scheme().'://'.$this->request->host();
+        $type = in_array(strval($d['type']), ['alipay','wxpay','qqpay','bank','jdpay','paypal']) ? strval($d['type']) : '';
         $param = [
             'pid'          => $pid,
-            'type'         => in_array(strval($d['type']), ['alipay','wxpay','qqpay']) ? $d['type'] : 'alipay',
             'out_trade_no' => $orderid,
             'notify_url'   => $host.'/pay/notify',
             'return_url'   => $host.'/pay/return',
             'name'         => vconfig('site_title','YanyvSEO').'-积分充值',
             'money'        => number_format($money, 2, '.', ''),
         ];
+        if($type !== '') $param['type'] = $type; //type为空跳收银台
         $str = '';
         ksort($param, SORT_STRING);
-        foreach($param as $k => $v) $str .= ($str ? '&' : '').$k.'='.$v;
-        $param['sign'] = strtoupper(md5($str.$key));
+        foreach($param as $k => $v){
+            if($v === '' || $v === null) continue;
+            $str .= ($str ? '&' : '').$k.'='.$v;
+        }
+        $param['sign'] = md5($str.$key);
         $param['sign_type'] = 'MD5';
         Lock::del(['key'=>'PAY_'.$this->manUser['userid']]);
         //兼容网关根地址与完整提交地址两种配置写法
-        $submit = preg_match('#/submit\.php$#i', $api) ? $api : $api.'/submit.php';
+        $submit = preg_match('#/(submit|mapi)\.php$#i', $api) ? $api : $api.'/submit.php';
         return $this->returnMsg(['url'=>$submit.'?'.http_build_query($param), 'orderid'=>$orderid],1);
     }
 

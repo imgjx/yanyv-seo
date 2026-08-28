@@ -1,0 +1,56 @@
+<style>
+#ai_task_box{padding:20px 25px;}
+#ai_task_box .task-progress{margin:10px 0 20px;}
+#ai_task_box .task-stat{margin-bottom:15px;color:#666;}
+#ai_task_box .task-stat b{color:#1E9FFF;margin:0 4px;}
+#ai_task_log{background:#1e1e1e;color:#9fd58b;font:12px/1.9 Consolas,Menlo,monospace;padding:12px 15px;height:360px;overflow:auto;border-radius:4px;white-space:pre-wrap;word-break:break-all;}
+</style>
+<div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-card-header" id="ai_task_title">AI模板任务</div>
+        <div class="layui-card-body" id="ai_task_box">
+            <div class="task-stat" id="ai_task_stat"></div>
+            <div class="layui-progress layui-progress-big" lay-showpercent="true" lay-filter="ai_task_bar">
+                <div class="layui-progress-bar layui-bg-blue" lay-percent="0%"></div>
+            </div>
+            <div class="task-progress"></div>
+            <div id="ai_task_log">正在启动任务…</div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+layui.use(['element'], function(){
+    var $ = layui.$, element = layui.element, layer = layui.layer;
+    var taskid = {$taskid};
+    var root = '{$root}';
+    var running = false, timer = null;
+    function render(st){
+        var logs = (st.logs || '').split('\n').slice(-60).join('\n');
+        var box = $('#ai_task_log');
+        box.text(logs || '处理中…');
+        box.scrollTop(box.prop('scrollHeight'));
+        if(st.state == 1){
+            stop();
+            var ok = (st.done||0) > 0;
+            $('#ai_task_title').html('AI模板任务 <span style="color:'+(ok?'#16B777':'#FF5722')+';">'+(ok?'已完成':'失败')+'</span>');
+            element.progress('ai_task_bar', '100%');
+        }
+    }
+    function step(){
+        if(running) return;
+        running = true;
+        layui.admin.req(layui.cache.maps + root + 'step', {taskid: taskid}, function(res){
+            running = false;
+            if(res.code == 1){ render(res.data.task); }
+            else{
+                stop();
+                $('#ai_task_log').text('任务异常：' + res.msg);
+            }
+        }, 'post', {headersToken:true, timeout:600000});
+    }
+    function stop(){ if(timer){ clearInterval(timer); timer = null; } }
+    $('#ai_task_stat').html('模板生成中，通常需要 1-3 分钟，请勿关闭窗口');
+    timer = setInterval(step, 2000);
+    step();
+});
+</script>

@@ -1,0 +1,41 @@
+<div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-card-header">
+            文章重写提示词
+            <span id="ai_state" style="float:right;"></span>
+        </div>
+        <div class="layui-card-body">
+            <form class="layui-form layui-form-pane render">
+                <div class="layui-form-item layui-form-text">
+                    <label class="layui-form-label">重写提示词</label>
+                    <div class="layui-input-block">
+                        <textarea name="prompt" id="ai_prompt" lay-verify="required" class="layui-textarea" style="height:420px;">{$prompt|raw}</textarea>
+                        <div class="layui-form-mid layui-word-aux">用于 文章管理->重写文章。占位符：{literal}{content}{/literal} 自动替换为原文正文，{literal}{date}{/literal} 自动替换为当前年月日（{$date}）。留空使用系统内置模板。</div>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn" lay-submit lay-filter="ai-rewrite-save"><i class="layui-icon layui-icon-ok"></i> 保存提示词</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+layui.use(['form'], function(){
+    var app_root = layui.cache.maps + 'cms.ai/';
+    var form = layui.form, layer = layui.layer, admin = layui.admin, $ = layui.$;
+    var ready = {$ready|intval};
+    $('#ai_state').html(ready ? '<span style="color:#16B777;">● AI接口已配置</span>' : '<span style="color:#FF5722;">● 请先在 系统管理->AI配置 完成配置</span>');
+    form.on('submit(ai-rewrite-save)',function(data){
+        var btn = $(this);
+        if(btn.attr('stop')){return false}else{btn.attr('stop',1)}
+        admin.req(app_root+"saveRewrite",{prompt:data.field.prompt},function(res){
+            layer.msg(res.msg,{time:1500});
+            btn.removeAttr('stop');
+        },'post',{headersToken:true});
+        return false;
+    });
+});
+</script>

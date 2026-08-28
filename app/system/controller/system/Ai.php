@@ -36,7 +36,7 @@ class Ai extends AdminBase
     public function save()
     {
         $d = $this->only(['@token'=>''], 'post', 'strip_sql', false);
-        $allow = ['ai_api_url','ai_api_key','ai_model','ai_temperature'];
+        $allow = ['ai_api_url','ai_api_key','ai_model','ai_temperature','ai_no_stream'];
         $time = time();
         foreach($allow as $name){
             if(!array_key_exists($name, $d)) continue;

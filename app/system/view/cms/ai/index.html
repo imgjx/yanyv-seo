@@ -32,7 +32,7 @@
                     <label class="layui-form-label">生成提示词</label>
                     <div class="layui-input-block">
                         <textarea name="prompt" id="ai_prompt" lay-vertype="tips" lay-verify="required" class="layui-textarea" style="height:280px;" placeholder="{$date} 将自动替换为当前年月日">{$prompt|raw}</textarea>
-                        <div class="layui-form-mid layui-word-aux">系统内置提示词已按要求定制（生成Markdown文章 / 拟人化 / 无emoji / 无AI味），可自行修改后保存；系统自动注入当前年月日。</div>
+                        <div class="layui-form-mid layui-word-aux">提示词随每次生成直接提交生效；{literal}{date}{/literal} 自动替换为当前年月日（{$date}）；可点"保存提示词"设为默认。</div>
                     </div>
                 </div>
                 <div class="layui-form-item">
@@ -47,38 +47,39 @@
 <script type="text/javascript">
 layui.use(['form'], function(){
     var app_root = layui.cache.maps + 'cms.ai/';
-    var form = layui.form, layer = layui.layer, $ = layui.$;
+    var form = layui.form, layer = layui.layer, admin = layui.admin, $ = layui.$;
     var ready = {$ready|intval};
     $('#ai_state').html(ready ? '<span style="color:#16B777;">● AI接口已配置</span>' : '<span style="color:#FF5722;">● 请先在 系统管理->AI配置 完成配置</span>');
     /*保存提示词*/
     form.on('submit(ai-prompt-save)',function(data){
         var btn = $(this);
         if(btn.attr('stop')){return false}else{btn.attr('stop',1)}
-        admin_req(app_root+"save",{prompt:data.field.prompt},function(res){
+        admin.req(app_root+"save",{prompt:data.field.prompt},function(res){
             layer.msg(res.msg,{time:1500});
             btn.removeAttr('stop');
-        });
+        },'post',{headersToken:true});
         return false;
     });
-    /*批量生成*/
+    /*批量生成：创建任务后打开状态页*/
     form.on('submit(ai-gen)',function(data){
         var btn = $(this);
         if(!ready){ layer.msg('请先在 系统管理->AI配置 中配置API地址与密钥'); return false; }
+        if(!data.field.groupid){ layer.msg('请选择要保存到的文章分组'); return false; }
         if(btn.attr('stop')){return false}else{btn.attr('stop',1)}
-        var load = layer.load(2);
-        layui.admin.req(app_root+"gen",data.field,function(res){
-            layer.close(load); btn.removeAttr('stop');
+        admin.req(app_root+"gen",data.field,function(res){
+            btn.removeAttr('stop');
             if(res.code==1){
-                layer.msg(res.data.msg,{shade:[0.4,'#000'],time:4000});
+                admin.open({
+                    type: 2,
+                    title: 'AI生成任务',
+                    area: ['760px','640px'],
+                    url: app_root+'status?taskid='+res.data.taskid
+                });
             }else{
                 layer.msg(res.msg);
             }
-        },'post',{headersToken:true,timeout:600000});
+        },'post',{headersToken:true});
         return false;
     });
-    /*简易请求封装*/
-    function admin_req(url,data,cb){
-        layui.admin.req(url,data,cb,'post',{headersToken:true,timeout:600000});
-    }
 });
 </script>
