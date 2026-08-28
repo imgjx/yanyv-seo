@@ -3,7 +3,7 @@
 > 多用户站群 SEO 蜘蛛池系统 · 基于 Veitool 框架（ThinkPHP8.x + Layui2.13.x）
 
 烟雨蜘蛛池系统是一套面向多用户的站群蜘蛛池解决方案：普通用户提交链接并按积分计费，系统通过泛解析站群承接搜索引擎蜘蛛流量，按规则将引导跳转（302 强引）或链接曝光计费给链接所属用户。
-
+DEMO:[https://demo-seo.yanyv.cc/system/](https://demo-seo.yanyv.cc/system/)
 ## 功能特性
 
 ### 用户与权限
