@@ -1,7 +1,7 @@
 <?php
 /**
  * ===========================================================================
- * 烟雨蜘蛛池系统 - 站群站点管理
+ * YanyvSEO - 站群站点管理
  * ===========================================================================
  */
 namespace app\system\controller\pool;
@@ -19,8 +19,9 @@ class Site extends AdminBase
     {
         if($do == 'json') return $this->returnMsg((new MD())->listQuery());
         $this->assign([
-            'limit'   => 10,
-            'tplList' => json_encode(Tpl::column('title','tid'))
+            'limit'     => 10,
+            'tplList'   => json_encode(Tpl::column('title','tid')),
+            'groupList' => json_encode(\app\model\cms\Group::allGroups())
         ]);
         return $this->fetch();
     }
@@ -30,7 +31,9 @@ class Site extends AdminBase
      */
     public function add()
     {
-        $d = $this->only(['@token'=>'','@title/*/{2,60}/站点名称','@domain/*/{3,80}/泛解析域名如*.abc.com或abc.com/0/.*\-','template_id/d','ratio_301/d','weight/d','real_ip_head/h','cms_url/s','cms_rules','cache_hours/d','spider_show/d']);
+        $d = $this->only(['@token'=>'','@title/*/{2,60}/站点名称','@domain/*/{3,80}/泛解析域名如*.abc.com或abc.com/0/.*\-','template_id/d','ratio_301/d','weight/d','real_ip_head/h','cms_groupid/d','kw_mode/d','kw_lib','kw_price/r','kw_spider/d','kw_param/s','cache_hours/d','spider_show/d']);
+        //SEO关键词库整理：每行一个
+        $d['kw_lib'] = implode("\n", array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', strval($d['kw_lib'])))));
         //域名格式校验（支持 *.abc.com 泛解析）
         $domain = MD::checkDomain($d['domain']);
         if(!$domain) return $this->returnMsg("域名格式不正确，示例：abc.com 或 *.abc.com");
@@ -56,7 +59,9 @@ class Site extends AdminBase
             MD::flushMap(); //状态快编影响接管范围
             return $this->returnMsg($rs->save([$field=>intval($d['av'])]) ? "设置成功" : "设置失败", 1);
         }
-        $d = $this->only(['@token'=>'','@siteid/d','@title/*/{2,60}/站点名称','@domain/*/{3,80}/泛解析域名如*.abc.com或abc.com/0/.*\-','template_id/d','ratio_301/d','weight/d','real_ip_head/h','cms_url/s','cms_rules','cache_hours/d','spider_show/d']);
+        $d = $this->only(['@token'=>'','@siteid/d','@title/*/{2,60}/站点名称','@domain/*/{3,80}/泛解析域名如*.abc.com或abc.com/0/.*\-','template_id/d','ratio_301/d','weight/d','real_ip_head/h','cms_groupid/d','kw_mode/d','kw_lib','kw_price/r','kw_spider/d','kw_param/s','cache_hours/d','spider_show/d']);
+        //SEO关键词库整理：每行一个
+        $d['kw_lib'] = implode("\n", array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', strval($d['kw_lib'])))));
         //域名格式校验（支持 *.abc.com 泛解析）
         $domain = MD::checkDomain($d['domain']);
         if(!$domain) return $this->returnMsg("域名格式不正确，示例：abc.com 或 *.abc.com");

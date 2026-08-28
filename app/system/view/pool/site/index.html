@@ -31,9 +31,13 @@ layui.use(['buildItems'], function(){
     var layer = layui.layer,table=layui.table,form=layui.form,admin=layui.admin;
     var limit = {$limit};
     var TplList = {$tplList|raw};
+    var GroupList = {$groupList|raw};
     /*模板下拉选项*/
     var tplOptions = {'0':'不使用模板'};
     for(var tid in TplList){ tplOptions[tid] = TplList[tid]; }
+    /*文章分组下拉选项*/
+    var grpOptions = {'0':'不使用（内容为空）'};
+    for(var i in GroupList){ grpOptions[GroupList[i].groupid] = GroupList[i].title; }
     /*渲染数据*/
     table.render({
         elem: '#poolsite',
@@ -106,9 +110,13 @@ layui.use(['buildItems'], function(){
                         {name:"ratio_301",title:"302强引占比%",type:"number",value:(Dt?Dt.ratio_301:100),placeholder:"0-100，蜘蛛命中时按此概率执行302强引",tips:"每个站点独立的302强引占比配置，100表示全部强引"},
                         {name:"weight",title:"轮询权重",type:"number",value:(Dt?Dt.weight:1),placeholder:"数值越大被选中概率越高"},
                         {name:"real_ip_head",title:"Real-IP头",type:"text",value:(Dt?Dt.real_ip_head:'X-Forwarded-For'),placeholder:"默认 X-Forwarded-For",tips:"识别搜索引擎真实IP所读取的头，可留空直接取客户端IP"},
-                        {name:"cms_url",title:"CMS内容源",type:"text",value:(Dt?Dt.cms_url:''),placeholder:"如：https://xxx.com/api/content（留空不抓取）"},
-                        {name:"cms_rules",title:"抓取正则规则",type:"textarea",value:(Dt?Dt.cms_rules:''),placeholder:"每行一条正则，命名分组内容将注入模板变量，如：/<h1>(?P<Content>.*?)<\\/h1>/is"},
-                        {name:"cache_hours",title:"CMS缓存(小时)",type:"number",value:(Dt?Dt.cache_hours:24),placeholder:"抓取结果缓存小时数"},
+                        {name:"cms_groupid",title:"CMS文章分组",type:"select",value:(Dt?Dt.cms_groupid:0),options:grpOptions,tips:"站群内容取该分组文章（分组在 内容管理->文章分组 维护），模板变量 {literal}{$Content}{/literal} 输出随机一篇正文，{literal}{$Article}{/literal} 输出该分组文章列表与详情"},
+                        {name:"cache_hours",title:"内容缓存(小时)",type:"number",value:(Dt?Dt.cache_hours:24),placeholder:"同一访客内容缓存小时数"},
+                        {name:"kw_mode",title:"SEO关键词模式",type:"radio",value:(Dt?Dt.kw_mode:0),options:{0:'关闭',1:'自定义关键词'},tips:"开启后模板变量 {literal}{$Keyword}{/literal} 输出关键词，引导链接自动携带关键词参数"},
+                        {name:"kw_lib",title:"关键词库",type:"textarea",value:(Dt?Dt.kw_lib:''),placeholder:"每行一个关键词，如：\n瑜伽培训\n零基础学瑜伽"},
+                        {name:"kw_price",title:"关键词引导价格",type:"number",value:(Dt?Dt.kw_price:0),placeholder:"带关键词引导每条消耗积分，0按链接价格"},
+                        {name:"kw_spider",title:"蜘蛛关键词",type:"radio",value:(Dt?(Dt.kw_spider===0?0:1):1),options:{1:'允许带关键词的蜘蛛',0:'忽略关键词'},tips:"蜘蛛访问URL自带关键词参数时是否允许按关键词模式引导计费"},
+                        {name:"kw_param",title:"关键词参数名",type:"text",value:(Dt?Dt.kw_param:'kw'),placeholder:"默认 kw，即 ?kw=关键词"},
                         {name:"spider_show",title:"单次展示链接数",type:"number",value:(Dt?Dt.spider_show:10),placeholder:"每次蜘蛛访问页面输出的投放链接条数"},
                     ]
                 });

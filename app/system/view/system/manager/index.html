@@ -1,32 +1,12 @@
 <style>
-#organizationTreeBar{padding:10px 15px;border:1px solid #e6e6e6;background-color:#f2f2f2}
-#organizationTree{border:1px solid #e6e6e6;border-top:none;padding:10px 5px;overflow:auto;height:-webkit-calc(100vh - 260px);height:-moz-calc(100vh - 260px);height:calc(100vh - 260px)}
 .layui-tree-entry .layui-tree-txt{padding:0 5px;border:1px transparent solid;text-decoration:none!important}
-.layui-tree-entry.organ-tree-click .layui-tree-txt{background-color:#fff3e0;border:1px #ffe6b0 solid}
 </style>
 <div class="layui-fluid">
     <div class="layui-row layui-col-space15">
-        <div class="layui-col-md3">
-            <div class="layui-card">
-                <div class="layui-card-body" style="padding:10px;">
-                    <!-- 树工具栏 -->
-                    <div class="layui-form toolbar" id="organizationTreeBar">
-                        <div class="layui-btn-group">
-                            <a id="organ-add" class="layui-btn layui-btn-sm icon-btn" v-show="@system.manager/oadd"><i class="layui-icon">&#xe654;</i>添加</a>
-                            <a id="organ-edit" class="layui-btn layui-btn-sm icon-btn" v-show="@system.manager/oedit"><i class="layui-icon">&#xe642;</i>修改</a>
-                            <a id="organ-del" class="layui-btn layui-btn-sm icon-btn" v-show="@system.manager/odel"><i class="layui-icon">&#xe640;</i>删除</a>
-                        </div>
-                    </div>
-                    <!-- 左树 -->
-                    <div id="organizationTree"></div>
-                </div>
-            </div>
-        </div>
-        <div class="layui-col-md9">
+        <div class="layui-col-md12">
             <div class="layui-card">
                 <div class="layui-card-header">
                     <form class="layui-form render">
-                        <input type="hidden" name="groupid" id="manager-groupid" value=""/>
                         <div class="layui-form-item">
                             <div class="layui-inline" style="width:72px;">
                                 <select name="fields">
@@ -50,7 +30,6 @@
                             <div class="layui-inline">
                                 <div class="layui-btn-group">
                                     <button class="layui-btn" lay-submit lay-filter="search-manager"><i class="layui-icon layui-icon-search"></i> 搜索</button>
-                                    <a class="layui-btn" lay-submit lay-filter="search-manager-all" onclick="$('#manager-groupid').val('')"><i class="layui-icon layui-icon-light"></i>全部</a>
                                 </div>
                             </div>
                         </div>
@@ -79,114 +58,6 @@ layui.use(['vinfo', 'buildItems'], function(){
     var Roles = {$roles|raw};
     /*顶部类别构建*/
     admin.util.buildOption('#search_roles_select',Roles,'选择角色');
-    /*==============左树结构===============*/
-    var organObj, organData, Organ = {}, organArr = {$organ|raw}; /*左树 选中数据 和 总树数据*/
-    for(let v of organArr){Organ[v.id] = v.title}
-    function renderTree(data,load){
-        if(!load) organObj = data[0];
-        if(data){
-            organData = admin.util.toTree(data);
-            doTree(organData,load);
-        }else{
-            admin.req(app_root + "index?do=organ",function(res){
-                organData = admin.util.toTree(res);
-                doTree(organData,load);
-            });
-        }
-    }
-    function doTree(data,load){
-        layui.tree.render({
-            id: 'organTree',
-            elem: '#organizationTree',
-            data: data,
-            onlyIconControl: true,
-            click: function(obj){
-                $('#organizationTree').find('.organ-tree-click').removeClass('organ-tree-click');
-                $(obj.elem).children('.layui-tree-entry').addClass('organ-tree-click');
-                organObj = obj.data;
-                $('#manager-groupid').val(obj.data.id);
-                table.reloadData('manager',{where:{groupid:obj.data.id},page:{curr:1}});
-            }
-        });
-        var item = $('#organizationTree .layui-tree-entry:first');
-        load ? item.find('.layui-tree-main>.layui-tree-txt').trigger('click') : item.addClass('organ-tree-click');
-    }
-    /*初始渲染*/
-    renderTree(organArr);
-    /*左树添加按钮*/
-    $('#organ-add').on('click',function(){organOpen();});/**/
-    /*左树编辑按钮*/
-    $('#organ-edit').on('click',function(){organOpen(organObj);});/**/
-    /*左树删除按钮*/
-    $('#organ-del').on('click', function(){
-        if(!organObj) return layer.msg('未选择机构');
-        layer.confirm('确定要删除所选机构吗？',function(){
-            admin.req(app_root+"odel",{id:organObj.id},function(res){
-                layer.msg(res.msg,{shade:[0.4,'#000'],time:1500},function(){
-                    if(res.code==1) renderTree(res.data,true);
-                });
-            },'post',{headersToken:true});
-        });
-    });/**/
-    /*树形编辑弹窗*/
-    function organOpen(Dt){
-        admin.open({
-            type: 1,
-            bid: 'organ_items',
-            btn: ['保存', '取消'],
-            area: ['500px', '500px'],
-            title: (Dt ? '修改' : '添加') + '机构',
-            success: function(lay,index){
-                layui.buildItems.build({
-                    bid: 'organ_items',
-                    data: [
-                        {name:"id",type:"hidden"},
-                        {name:"parentid",title:"上级机构",type:"html",html:'<div v-dict="PARENTID" options="{name:\'parentid\',prop:{name:\'title\',value:\'id\'},initValue:['+(Dt ? Dt.parentid : (organObj ? organObj.id : 0))+']}" class="v-xmselect-tree"></div>',must:true},
-                        {name:"title",title:"机构简称",type:"text",value:'',verify:'required',placeholder:"请输入机构简称",must:true},
-                        {name:"titles",title:"机构全称",type:"text",value:'',verify:'required',placeholder:"请输入机构全称",must:true},
-                        {name:"note",title:"备注说明",type:"textarea",value:'',placeholder:"请输入备注说明(选填)"},
-                        {name:"listorder",title:"排序编号",type:"number",value:'100',verify:'required',placeholder:"请输入排序数字",must:true}
-                    ]
-                });
-                form.val('organ_items_form',Dt);
-                /*渲染下拉树 https://maplemei.gitee.io/xm-select/#/component/options*/
-                var data = JSON.parse(JSON.stringify(organData));
-                if(Dt) Exitem(data,Dt.id,true);
-                admin.vDict(lay,{"PARENTID":data});/**/
-                form.on('submit(organ_items)',function(data){
-                    var btn = $(this);
-                    if (btn.attr('stop')){return false}else{btn.attr('stop',1)}
-                    var post_url = data.field.id ? app_root+'oedit' : app_root+'oadd';
-                    admin.req(post_url,data.field,function(res){
-                        layer.msg(res.msg,{shade:[0.4,'#000'],time:1500},function(){
-                            if(res.code==1){
-                                layer.close(index);
-                                renderTree(res.data,true);
-                            }
-                            btn.removeAttr('stop');
-                        });
-                    },'post',{headersToken:true});
-                    return false;
-                });
-            }
-        });
-    }/**/
-    /*机构本身和子类不可选为上级*/
-    function Exitem(data, id, flag){
-        for(var a in data){
-            if(flag){
-                if(data[a].id == id){
-                    data[a].disabled = true;
-                    if(data[a].hasOwnProperty('children')) Exitem(data[a].children, id, false);
-                }else{
-                    if(data[a].hasOwnProperty('children')) Exitem(data[a].children, id, flag);
-                }
-            }else{
-                data[a].disabled = true;
-                if(data[a].hasOwnProperty('children')) Exitem(data[a].children, id, false);
-            }
-        }
-    }/*==============左树结构END==============*/
     /*渲染数据*/
     table.render({
         elem: '#manager',
@@ -202,7 +73,6 @@ layui.use(['vinfo', 'buildItems'], function(){
             {field:"username",title:"帐号",align:'center',toolbar:'<div><a style="cursor:pointer;" lay-event="info">{{d.username}}</a></div>'},
             {field:"truename",edit:'text',align:'center',title:"姓名"},
             {field:"email",edit:'text',align:'center',title:"邮箱"},
-            {field:"groupid",align:'center',title:"部门",templet:function(d){return Organ[d.groupid]}},
             {field:"roleid",align:'center',title:"角色",templet:function(d){return Roles[d.roleid]}},
             {field:"mobile",width:110,edit:'text',align:'center',title:"手机"},
             {field:"edit",width:68,align:'center',title:"操作"},
@@ -312,7 +182,6 @@ layui.use(['vinfo', 'buildItems'], function(){
                     bid: 'manager_items',
                     data: [
                         {name:"userid",type:"hidden"},
-                        {name:"groupid",title:"所属机构",type:"html",html:'<div v-dict="GROUPID" options="{name:\'groupid\',prop:{name:\'title\',value:\'id\'},layVerify:\'required\',layVerType:\'tips\',layReqText:\'请选择所属机构\',initValue:['+(Dt ? Dt.groupid : 0)+']}" class="v-xmselect-tree"></div>',must:true},
                         {name:"roleids",title:"所属角色",type:"html",html:'<div v-dict="ROLEIDS" options="{name:\'roleids\',layVerify:\'required\',layVerType:\'tips\',layReqText:\'请选择所属角色\',radio:false,clickClose:false,model:{},initValue:['+(Dt ? Dt.roleids : 0)+']}" class="xm-select-demo-alert"></div>',must:true},
                         {name:"username",title:"管理帐号",type:"text",value:'',verify:'user',vertype:'tips',placeholder:"请输入4-30位管理帐号",must:true},
                         {name:"password",title:"登录密码",type:Dt ? 'hidden' : "password",id:'m_pwd',value:'',verify:Dt ? '' : 'pass',vertype:'tips',placeholder:"请输入6-16位登录密码",must:true},
@@ -340,8 +209,8 @@ layui.use(['vinfo', 'buildItems'], function(){
                         return ;
                     }
                 });
-                /* 手动渲染字典:组织机构、所属角色 渲染下拉树 https://maplemei.gitee.io/xm-select/#/component/options */
-                admin.vDict(lay,{"GROUPID":JSON.parse(JSON.stringify(organData)), "ROLEIDS":Roles});/**/
+                /* 手动渲染字典:所属角色 渲染下拉树 https://maplemei.gitee.io/xm-select/#/component/options */
+                admin.vDict(lay,{"ROLEIDS":Roles});/**/
                 form.on('submit(manager_items)',function(data){
                     var btn = $(this);
                     if (btn.attr('stop')){return false}else{btn.attr('stop',1)}

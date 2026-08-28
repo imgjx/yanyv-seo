@@ -1,7 +1,7 @@
 <?php
 /**
  * ===========================================================================
- * 烟雨蜘蛛池系统 - 会员在线充值（易支付兼容API）
+ * YanyvSEO - 会员在线充值（易支付兼容API）
  * 模式：fixed仅固定金额 / custom仅自定义金额 / mixed混合
  * 固定金额档位 pool_fixed_amounts 每行 金额:到账积分
  * 自定义金额按 pool_exchange_rate（1元=N积分）换算，默认100
@@ -94,7 +94,7 @@ class Recharge extends AdminBase
             'out_trade_no' => $orderid,
             'notify_url'   => $host.'/pay/notify',
             'return_url'   => $host.'/pay/return',
-            'name'         => vconfig('site_title','烟雨蜘蛛池').'-积分充值',
+            'name'         => vconfig('site_title','YanyvSEO').'-积分充值',
             'money'        => number_format($money, 2, '.', ''),
         ];
         $str = '';

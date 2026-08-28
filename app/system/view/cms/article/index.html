@@ -49,6 +49,7 @@ layui.use(['buildItems'], function(){
         url: app_root+"index?do=json",
         where: {groupid: 0},
         cols: [[
+            {type:'checkbox',fixed:'left'},
             {field:'articleid',width:60,unresize:true,align:'center',title:'ID',sort:!0},
             {field:"title",minWidth:220,title:"标题"},
             {field:"group_name",width:110,align:'center',title:"所属分组"},
@@ -111,6 +112,21 @@ layui.use(['buildItems'], function(){
         },'post',{headersToken:true});
     }/**/
     $('#cmsarticle-add').on('click',function(){articleOpen();});/**/
+    /*AI批量重写*/
+    $('#cmsarticle-rewrite').on('click',function(){
+        var rows = table.checkStatus('cmsarticle').data;
+        if(rows.length === 0) return layer.msg('请先勾选需要AI重写的文章');
+        var ids = rows.map(function(d){return d.articleid;});
+        layer.confirm('确定对所选 '+ids.length+' 篇文章执行AI重写吗？重写后原标题与正文将被替换。',function(i){
+            layer.close(i);
+            var load = layer.load(2);
+            admin.req(layui.cache.maps + 'cms.ai/rewrite',{ids:ids,concurrency:3},function(res){
+                layer.close(load);
+                layer.msg(res.code==1 ? res.data.msg : res.msg,{shade:[0.4,'#000'],time:4000});
+                if(res.code==1) table.reloadData('cmsarticle');
+            },'post',{headersToken:true,timeout:600000});
+        });
+    });/**/
     table.on('tool(cmsarticle)', function(obj){
         if(obj.event === 'edit'){ articleOpen(obj.data); }
         else if(obj.event === 'view'){ articleView(obj.data); }

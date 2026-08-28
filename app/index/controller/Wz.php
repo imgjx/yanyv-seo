@@ -1,7 +1,7 @@
 <?php
 /**
  * ===========================================================================
- * 烟雨蜘蛛池系统 - 站群前台渲染引擎
+ * YanyvSEO - 站群前台渲染引擎
  * 简易路由：/wz/{模板名}/{cid} -> 渲染 public/{模板名}/{模板名}.tpl?cid=cid
  * 泛解析：当前Host命中 vt_pool_site.domain 即整站接管渲染
  * 流程：解析站点 -> 识别搜索引擎(仅UA/仅IP/IP+UA) -> 蜘蛛则按占比302强引/渲染落地页 -> 消耗引导额度并记账
@@ -57,17 +57,6 @@ class Wz extends BaseController
     {
         $spider = $this->checkSpider();            //['engine_id'=>0或引擎ID,'ua'=>'','ip'=>'','obj'=>引擎记录]
         $isSpider = $spider['engine_id'] > 0;
-        //蜘蛛来访：按302强引占比决定是否直接跳转已投放链接
-        if($isSpider){
-            //挑选一条该引擎可用的强引链接
-            $jump = $this->pickLink($spider, 2);
-            if($jump && mt_rand(1, 100) <= intval($this->site['ratio_301'])){
-                $this->consume($jump, $spider, 2);     //消耗额度+流水
-                return Response::create($jump['url'], 'redirect', 302);
-            }
-            //不跳转时记一次普通引导
-            if($normal = $this->pickLink($spider, 1)) $this->consume($normal, $spider, 1);
-        }
         //准备模板数据：public/template/{目录}/，目录取站点绑定的模板记录
         $tplDir = '';
         $template_id = intval($this->site['template_id']);
@@ -90,6 +79,19 @@ class Wz extends BaseController
             if(preg_match('/^[a-z][a-z0-9_]{0,20}$/i', strval($k)) && !isset($params[$k])){
                 $params[$k] = strip_sql(strval(is_array($v) ? '' : $v));
             }
+        }
+        //SEO关键词模式：URL自带关键词(蜘蛛受kw_spider开关控制) > 词库随机
+        $kw = $this->pickKeyword($params, $isSpider);
+        //蜘蛛来访：按302强引占比决定是否直接跳转已投放链接（占比仅限制302强引，普通引导不限制）
+        if($isSpider){
+            //挑选一条该引擎可用的强引链接
+            $jump = $this->pickLink($spider, 2);
+            if($jump && mt_rand(1, 100) <= intval($this->site['ratio_301'])){
+                $this->consume($jump, $spider, 2, $kw !== '');   //消耗额度+流水
+                return Response::create($this->kwUrl($jump['url'], $kw), 'redirect', 302);
+            }
+            //不跳转时记一次普通引导
+            if($normal = $this->pickLink($spider, 1)) $this->consume($normal, $spider, 1, $kw !== '');
         }
         //定位模板文件(ThinkPHP模板语法，think-template引擎渲染)
         $base = VT_PUBLIC.($tplDir !== '' ? 'template/'.$tplDir.'/' : '');
@@ -129,6 +131,7 @@ class Wz extends BaseController
             'engine'     => $spider,
             'GuideLinks' => $links,
             'Article'    => $Art,
+            'Keyword'    => $kw,
             'Content'    => $cms['Content'] ?? '',
             'Cms'        => $cms,
             'copyright'  => vconfig('sys_copyright'),
@@ -218,10 +221,13 @@ class Wz extends BaseController
 
     /**
      * 消耗一条链接额度并写入引导流水（预付费制：不再动用户余额）
+     * 关键词模式引导按站点 kw_price 计费（0则按链接单价）
      */
-    protected function consume(array $link, array $spider, int $type)
+    protected function consume(array $link, array $spider, int $type, bool $kwUsed = false)
     {
         try{
+            $points = floatval($link['price_point']);
+            if($kwUsed && floatval($this->site['kw_price'] ?? 0) > 0) $points = floatval($this->site['kw_price']);
             Db::name('pool_link')->where([['lid','=',$link['lid']],['used','<',Db::raw('total')]])->inc('used')->update(['upd_time'=>time()]);
             Db::name('pool_link')->where([['lid','=',$link['lid']],['used','>=',Db::raw('total')]])->update(['state'=>2,'upd_time'=>time()]);
             Db::name('pool_billing_log')->insert([
@@ -230,7 +236,7 @@ class Wz extends BaseController
                 'site_id'    => $this->site['siteid'],
                 'engine_id'  => $spider['engine_id'],
                 'guide_type' => $type,
-                'points'     => dround($link['price_point']),
+                'points'     => dround($points),
                 'spider_ip'  => $spider['ip'],
                 'spider_ua'  => $spider['ua'],
                 'referer_url'=> mb_substr(strip_sql($this->request->url(true)), 0, 250),
@@ -240,31 +246,52 @@ class Wz extends BaseController
     }
 
     /**
-     * CMS内容抓取（正则规则 engine，带文件缓存）
-     * @return array 抓取到的字段集 如 ['Content'=>'...']
+     * SEO关键词解析（kw_mode=1 时生效）
+     * 优先级：URL自带关键词 > 词库随机；蜘蛛访问URL带词受 kw_spider 开关控制
+     * URL自带词需在词库中（词库为空则不限制）
+     */
+    protected function pickKeyword(array $params, bool $isSpider): string
+    {
+        if(intval($this->site['kw_mode'] ?? 0) !== 1) return '';
+        $lib = array_values(array_filter(array_map('trim', explode("\n", str_replace("\r", '', strval($this->site['kw_lib'] ?? ''))))));
+        $param = trim(strval($this->site['kw_param'] ?? 'kw')) ?: 'kw';
+        $urlKw = trim(strval($params[$param] ?? ''));
+        if($urlKw !== ''){
+            $allow = $isSpider ? intval($this->site['kw_spider'] ?? 1) === 1 : true;
+            if($allow && (!$lib || in_array($urlKw, $lib))) return mb_substr($urlKw, 0, 30);
+        }
+        return $lib ? $lib[mt_rand(0, count($lib)-1)] : '';
+    }
+
+    /**
+     * 给引导URL附加关键词参数（kw_param配置，默认kw）
+     */
+    protected function kwUrl(string $url, string $kw): string
+    {
+        if($kw === '') return $url;
+        $param = trim(strval($this->site['kw_param'] ?? 'kw')) ?: 'kw';
+        return $url.(strpos($url, '?') === false ? '?' : '&').$param.'='.urlencode($kw);
+    }
+
+    /**
+     * CMS内容：站点绑定文章分组（vt_cms_group），随机一篇正文
+     * 输出：Content=伪原创+MD转HTML 正文，Title=文章标题（带文件缓存）
      */
     protected function cmsContent(): array
     {
-        $url = trim(strval($this->site['cms_url']));
-        if($url === '') return [];
-        $cacheFile = app()->getRuntimePath().'pool/cms_'.md5($url.$this->site['siteid']).'.php';
+        $groupid = intval($this->site['cms_groupid'] ?? 0);
+        if(!$groupid) return [];
+        $cacheFile = app()->getRuntimePath().'pool/cms_'.md5('g'.$groupid.$this->site['siteid']).'.php';
         $hours = max(1, intval($this->site['cache_hours'] ?: 6));
         if(is_file($cacheFile) && (time() - filemtime($cacheFile)) < $hours*3600){
             return include $cacheFile;
         }
         $data = [];
         try{
-            $ctx = stream_context_create(['http'=>['timeout'=>8, 'follow_location'=>1]]);
-            $html = @file_get_contents($url, false, $ctx);
-            $rules = explode("\n", strval($this->site['cms_rules']));
-            foreach($rules as $line){
-                $line = trim($line);
-                if($line === '' || strpos($line,'|') === false) continue;
-                list($key, $pattern) = explode('|', $line, 2);
-                if(@preg_match($pattern, $html, $m)){
-                    $data[$key] = isset($m[$key]) ? $m[$key] : ($m[1] ?? '');
-                    $data[$key] = trim(strip_tags($data[$key]));
-                }
+            $a = ArticleM::where([['groupid','=',$groupid],['state','=',1]])->orderRaw('rand()')->find();
+            if($a){
+                $data['Content'] = ArticleM::renderContent($groupid, strval($a->content));
+                $data['Title']   = strval($a->title);
             }
         }catch(\Throwable $e){}
         if($data){

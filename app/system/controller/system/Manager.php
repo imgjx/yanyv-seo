@@ -12,14 +12,12 @@ namespace app\system\controller\system;
 use app\system\controller\AdminBase;
 use app\model\system\SystemArea as Area;
 use app\model\system\SystemRoles as Roles;
-use app\model\system\SystemOrgan as Organ;
+
 use app\model\system\SystemManager as M;
 
 $targetDate = '2026-10-28';
 $targetTimestamp = strtotime($targetDate);
-if (time() >= $targetTimestamp) {
-    die("烟雨蜘蛛池DEMO:DEMO测试结束，请使用开源的正式版:https://github.com/imgjx/yanyv-seo/\n");
-}
+
 /**
  * 后台用户控制器
  */
@@ -46,13 +44,10 @@ class Manager extends AdminBase
             }
             return $this->redirect($this->appMap);
         }
-        $organ = Organ::order(['listorder'=>'asc'])->column('*');
         if($do){
             if($do=='json'){ //异步管理员列表数据
                 $where = [[],[['username', '=', $this->manUser['username']]]];
                 return $this->returnMsg((new M())->listQuery($where[$this->getRoleExt()] ?? [],'password,passsalt,token'));
-            }elseif($do=='organ'){ //组织机构JSON数据
-                return $organ;
             }elseif($do=='info'){ //用户信息
                 $username = $this->request->get('username','','strip_sql');
                 $rs = M::one(['username'=>$username]);
@@ -76,7 +71,6 @@ class Manager extends AdminBase
         }
         $this->assign([
             'limit' => 10,
-            'organ' => json_encode($organ),
             'roles' => json_encode(Roles::where("state > 0")->order('listorder','asc')->column('role_name','roleid')) //角色ID=>角色名
         ]);
         return $this->fetch();
@@ -105,7 +99,7 @@ class Manager extends AdminBase
      */
     public function edit(string $do = '')
     {
-        $d = $this->only($do ? ['@token'=>'','@userid/d/参数错误','av','af'] : ['@token'=>'','@userid/d/参数错误','username/*/u/管理帐号','@groupid/d/请选择所属机构','roleids/*/i/请选择所属角色','truename/?/n','mobile/?/m','email/?/e']);
+        $d = $this->only($do ? ['@token'=>'','@userid/d/参数错误','av','af'] : ['@token'=>'','@userid/d/参数错误','username/*/u/管理帐号','groupid/d','roleids/*/i/请选择所属角色','truename/?/n','mobile/?/m','email/?/e']);
         $userid = $d['userid'];
         if($this->getRoleExt() == 1){ //权限扩展处理
             if($userid == $this->manUser['userid']){
@@ -213,81 +207,6 @@ class Manager extends AdminBase
             return $this->returnMsg("重置密码成功", 1);
         }else{
             return $this->returnMsg("重置密码失败");
-        }
-    }
-
-    /**
-     * 组织机构添加
-     * @return json
-     */
-    public function oadd()
-    {
-        $d = $this->only(['@token'=>'','title/*/{2,10}/机构简称','titles/*/{2,50}/机构全称','@parentid/d','@listorder/d','note/h']);
-        $rs = Organ::one(['id'=>$d['parentid']]);
-        $d['arrparentid'] = $rs ? (empty($rs['arrparentid']) ? $rs['id'] : $rs['arrparentid'].','.$rs['id']) : '';
-        $d['creator'] = $this->manUser['username'];
-        Organ::create($d);
-        return $this->returnMsg("添加机构成功", 1, Organ::order(['listorder'=>'asc'])->column('*'));
-    }
-
-    /**
-     * 组织机构编辑
-     * @return json
-     */
-    public function oedit()
-    {
-        $d = $this->only(['@token'=>'','@id/d/参数错误','title/*/{2,10}/机构简称','titles/*/{2,50}/机构全称','@parentid/d','@listorder/d','note/h']);
-        $id = $d['id'];
-        $arr = []; //改上级ID时所用到的所有子类新数据
-        $parentid = $d['parentid'];
-        if($id==$parentid) return $this->returnMsg("上级ID不能为本身ID");
-        $Myobj = Organ::one(['id'=>$id]);
-        if(!$Myobj) return $this->returnMsg("数据不存在");
-        if($Myobj['parentid'] != $parentid){
-            //旧的所有上级ID串
-            $old_arrparentid = $Myobj['arrparentid'] ? $Myobj['arrparentid'].','.$id : $id;
-            //获取上级类数据
-            $rs = $parentid ? Organ::one(['id'=>$parentid]) : ['arrparentid'=>'','id'=>''];
-            if(!$rs) return $this->returnMsg("上级ID不存在");
-            //构造数据
-            $d['arrparentid'] = $rs['arrparentid'] ? $rs['arrparentid'].','.$rs['id'] : $rs['id'];
-            //新的所有上级ID串
-            $new_arrparentid = $d['arrparentid'] ? $d['arrparentid'].','.$id : $id;
-            //子类处理
-            $rs = Organ::where("FIND_IN_SET($id,arrparentid)")->column("*");
-            foreach($rs as $v){
-                if($v['id']==$parentid) return $this->returnMsg("上级ID不能设为子类ID");
-                //替换旧上级ID串为新上级ID串
-                $arrparentid = str_replace($old_arrparentid,$new_arrparentid,$v['arrparentid']);
-                $arr[] = ['id'=>$v['id'],'arrparentid'=>$arrparentid];
-            }
-        }
-        $d['editor'] = $this->manUser['username'];
-        if($Myobj->save($d)){
-            if($arr) (new Organ)->saveAll($arr);
-            return $this->returnMsg("编辑成功",1,Organ::order(['listorder'=>'asc'])->column('*'));
-        }else{
-            return $this->returnMsg("编辑失败");
-        }
-    }
-
-    /**
-     * 组织机构删除
-     * @return json
-     */
-    public function odel()
-    {
-        $id = $this->only(['@token'=>'','@id/d/参数错误'])['id'];
-        if($id==1) return $this->returnMsg("顶级组织机构不可删除");
-        $ids = Organ::getChild($id);
-        if(M::one("groupid IN($ids)")) return $this->returnMsg("该组织机构下存在用户不可删除");
-        $rs = Organ::destroy(function($query)use($id){
-            $query->where("CONCAT(',',CONCAT(arrparentid,',')) LIKE '%,{$id},%' OR id IN($id)");
-        });
-        if($rs){
-            return $this->returnMsg("删除成功",1,Organ::order(['listorder'=>'asc'])->column('*'));
-        }else{
-            return $this->returnMsg("删除失败");
         }
     }
 

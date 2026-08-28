@@ -1,0 +1,84 @@
+<div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-card-header">
+            AI内容生成
+            <span id="ai_state" style="float:right;"></span>
+        </div>
+        <div class="layui-card-body">
+            <form class="layui-form layui-form-pane render">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">保存分组</label>
+                    <div class="layui-input-inline" style="width:220px;">
+                        <select name="groupid" lay-verify="required" lay-reqtext="请选择文章分组">
+                            <option value=""></option>
+                            {volist name="groups" id="vo"}
+                            <option value="{$vo.groupid}">{$vo.title}</option>
+                            {/volist}
+                        </select>
+                    </div>
+                    <label class="layui-form-label">生成轮数</label>
+                    <div class="layui-input-inline" style="width:120px;">
+                        <input type="number" name="rounds" value="5" min="1" max="50" lay-verify="required" class="layui-input" placeholder="1-50"/>
+                    </div>
+                    <label class="layui-form-label">并发数</label>
+                    <div class="layui-input-inline" style="width:120px;">
+                        <input type="number" name="concurrency" value="3" min="1" max="10" lay-verify="required" class="layui-input" placeholder="1-10"/>
+                    </div>
+                    <div class="layui-inline">
+                        <button class="layui-btn layui-btn-normal" lay-submit lay-filter="ai-gen"><i class="layui-icon layui-icon-engine"></i> 开始生成</button>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">生成提示词</label>
+                    <div class="layui-input-block">
+                        <textarea name="prompt" id="ai_prompt" lay-vertype="tips" lay-verify="required" class="layui-textarea" style="height:280px;" placeholder="{$date} 将自动替换为当前年月日">{$prompt|raw}</textarea>
+                        <div class="layui-form-mid layui-word-aux">系统内置提示词已按要求定制（生成Markdown文章 / 拟人化 / 无emoji / 无AI味），可自行修改后保存；系统自动注入当前年月日。</div>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn layui-btn-primary layui-btn-sm" lay-submit lay-filter="ai-prompt-save"><i class="layui-icon layui-icon-ok"></i> 保存提示词</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+layui.use(['form'], function(){
+    var app_root = layui.cache.maps + 'cms.ai/';
+    var form = layui.form, layer = layui.layer, $ = layui.$;
+    var ready = {$ready|intval};
+    $('#ai_state').html(ready ? '<span style="color:#16B777;">● AI接口已配置</span>' : '<span style="color:#FF5722;">● 请先在 系统管理->AI配置 完成配置</span>');
+    /*保存提示词*/
+    form.on('submit(ai-prompt-save)',function(data){
+        var btn = $(this);
+        if(btn.attr('stop')){return false}else{btn.attr('stop',1)}
+        admin_req(app_root+"save",{prompt:data.field.prompt},function(res){
+            layer.msg(res.msg,{time:1500});
+            btn.removeAttr('stop');
+        });
+        return false;
+    });
+    /*批量生成*/
+    form.on('submit(ai-gen)',function(data){
+        var btn = $(this);
+        if(!ready){ layer.msg('请先在 系统管理->AI配置 中配置API地址与密钥'); return false; }
+        if(btn.attr('stop')){return false}else{btn.attr('stop',1)}
+        var load = layer.load(2);
+        layui.admin.req(app_root+"gen",data.field,function(res){
+            layer.close(load); btn.removeAttr('stop');
+            if(res.code==1){
+                layer.msg(res.data.msg,{shade:[0.4,'#000'],time:4000});
+            }else{
+                layer.msg(res.msg);
+            }
+        },'post',{headersToken:true,timeout:600000});
+        return false;
+    });
+    /*简易请求封装*/
+    function admin_req(url,data,cb){
+        layui.admin.req(url,data,cb,'post',{headersToken:true,timeout:600000});
+    }
+});
+</script>

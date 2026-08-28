@@ -1,0 +1,48 @@
+<style>
+#ai_box{padding-right:80px;}
+#ai_box .layui-form-label{width:130px}
+#ai_box .layui-input-block{margin-left:160px}
+#ai_box .layui-word-aux{color:#ccc!important;}
+</style>
+<div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-card-header">
+            AI配置
+            <span class="layui-form-mid layui-word-aux" style="margin-left:15px;">兼容 OpenAI 接口规范，可用于 AI内容生成 / AI文章重写 / AI模板</span>
+            <span id="ai_state" style="float:right;"></span>
+        </div>
+        <div class="layui-card-body">
+            <form class="layui-form" lay-filter="ai_box_form" style="padding-top:30px;">
+                <div id="ai_box"></div>
+                <div class="layui-form-item text-center">
+                    <button class="layui-btn" lay-submit lay-filter="ai-save-submit">确认保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+layui.use(['buildItems'], function(){
+    var app_root = layui.cache.maps + 'system.ai/';
+    var ready = {$ready|intval};
+    var items = {$items|raw};
+    layui.$('#ai_state').html(ready ? '<span style="color:#16B777;">● API已配置</span>' : '<span style="color:#FF5722;">● API未配置，请填写接口地址与密钥</span>');
+    layui.buildItems.build({
+        bid: 'ai_box',
+        data: items,
+        map: layui.cache.maps + 'system.upload/',
+        gid: 1
+    });
+    layui.form.on('submit(ai-save-submit)', function(data){
+        var btn = layui.$(this);
+        if (btn.attr('stop')){return false;}else{btn.attr('stop',1);}
+        layui.admin.req(app_root+"save",data.field,function(res){
+            layer.msg(res.msg,{shade:[0.4,'#000'],time:1500},function(){
+                if(res.code==1) window.location.reload();
+            });
+            btn.removeAttr('stop');
+        },'post',{headersToken:true});
+        return false;
+    });
+});
+</script>

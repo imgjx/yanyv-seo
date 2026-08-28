@@ -1,0 +1,59 @@
+<div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-card-header">
+            AI模板生成
+            <span id="ai_state" style="float:right;"></span>
+        </div>
+        <div class="layui-card-body">
+            <form class="layui-form layui-form-pane render">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">模板目录</label>
+                    <div class="layui-input-inline" style="width:200px;">
+                        <input type="text" name="name" lay-verify="required" class="layui-input" placeholder="2-20位字母数字下划线"/>
+                    </div>
+                    <label class="layui-form-label">模板显示名</label>
+                    <div class="layui-input-inline" style="width:200px;">
+                        <input type="text" name="title" lay-verify="required" class="layui-input" placeholder="如：企业官网蓝色风"/>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">网站要求</label>
+                    <div class="layui-input-block">
+                        <textarea name="require" id="ai_require" lay-verify="required" class="layui-textarea" style="height:220px;" placeholder="描述你想要的网站：行业、风格、栏目、配色、目标人群等，例如：做一个 yoga 瑜伽馆官网，清新绿色风格，含首页轮播、课程介绍、教练团队、文章资讯，移动端优先"></textarea>
+                        <div class="layui-form-mid layui-word-aux">系统会自动注入当前年月日，AI将生成 index.tpl（首页）与 post.tpl（文章详情页），并自动登记到模板管理。</div>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn layui-btn-normal" lay-submit lay-filter="ai-tpl-gen"><i class="layui-icon layui-icon-engine"></i> 开始生成</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+layui.use(['form'], function(){
+    var app_root = layui.cache.maps + 'pool.aitpl/';
+    var form = layui.form, layer = layui.layer, $ = layui.$;
+    var ready = {$ready|intval};
+    $('#ai_state').html(ready ? '<span style="color:#16B777;">● AI接口已配置</span>' : '<span style="color:#FF5722;">● 请先在 系统管理->AI配置 完成配置</span>');
+    form.on('submit(ai-tpl-gen)',function(data){
+        if(!ready){ layer.msg('请先在 系统管理->AI配置 中配置API地址与密钥'); return false; }
+        var btn = $(this);
+        if(btn.attr('stop')){return false}else{btn.attr('stop',1)}
+        var load = layer.load(2);
+        layui.admin.req(app_root+"gen",data.field,function(res){
+            layer.close(load); btn.removeAttr('stop');
+            if(res.code==1){
+                layer.msg(res.data.msg,{shade:[0.4,'#000'],time:4000},function(){
+                    window.location.href = layui.cache.maps + 'pool.template/index';
+                });
+            }else{
+                layer.msg(res.msg);
+            }
+        },'post',{headersToken:true,timeout:600000});
+        return false;
+    });
+});
+</script>

@@ -1,7 +1,7 @@
 <?php
 /**
  * ===========================================================================
- * 烟雨蜘蛛池系统 - 站群模板管理
+ * YanyvSEO - 站群模板管理
  * 模板存储：public/template/{name}/ 含 index.tpl 与 {name}.conf(JSON)
  * .conf 内容：模板显示名(title)、路由规则(routes)等基础信息
  * ===========================================================================
@@ -59,7 +59,7 @@ class Template extends AdminBase
         file_put_contents($dir.DIRECTORY_SEPARATOR.'index.tpl',
 '<!doctype html>
 <html>
-<head><meta charset="utf-8"/><title>{$site.title} - 烟雨蜘蛛池</title></head>
+<head><meta charset="utf-8"/><title>{$site.title} - YanyvSEO</title></head>
 <body>
 <h1>{$site.title}</h1>
 <div>{$Content|raw}</div>

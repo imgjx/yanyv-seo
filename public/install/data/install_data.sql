@@ -237,7 +237,7 @@ INSERT INTO `vt_system_menus` VALUES ('11', '1', '', '设配置项', '设配置�
 INSERT INTO `vt_system_menus` VALUES ('12', '1', '', '管理配置', '管理配置', '', 'system.setting/index', '', '', '2', '2', '1', '1', '1', '', '', '1700289715', '0', '0');
 INSERT INTO `vt_system_menus` VALUES ('13', '1', '', '后台菜单', '后台菜单', '', 'system.menus/index', '', '', '2', '3', '1', '1', '1', '', '', '1700289715', '0', '0');
 INSERT INTO `vt_system_menus` VALUES ('14', '1', '', '用户角色', '用户角色', '', 'system.roles/index', '', '', '2', '4', '1', '1', '1', '', '', '1700289715', '0', '0');
-INSERT INTO `vt_system_menus` VALUES ('15', '1', '', '用户管理', '用户管理', '', 'system.manager/index', '', '', '2', '5', '1', '1', '1', '', '', '1700289715', '0', '0');
+INSERT INTO `vt_system_menus` VALUES ('15', '1', '', '用户管理', '用户管理', '', 'system.manager/index', '', '', '1', '3', '1', '1', '1', '', '', '1700289715', '0', '0');
 INSERT INTO `vt_system_menus` VALUES ('16', '1', '', '上传管理', '上传管理', '', 'system.upload/image', '', '', '2', '6', '0', '0', '1', '', '', '1700289715', '0', '0');
 INSERT INTO `vt_system_menus` VALUES ('17', '1', '', '文件管理', '文件管理', '', 'system.filemanage/index', '', '', '2', '6', '1', '1', '1', '', '', '1700289715', '0', '0');
 INSERT INTO `vt_system_menus` VALUES ('18', '1', '', '日志管理', '登录日志', '', 'system.log/index', 'system.log/index', '', '2', '7', '1', '1', '1', '', '', '1700289715', '0', '0');
@@ -369,7 +369,10 @@ INSERT INTO `vt_system_menus` VALUES ('145', '1', '', '财务记录', '财务记
 INSERT INTO `vt_system_menus` VALUES ('146', '1', '', '个人中心', '个人中心', '', 'system.manager/index?action=info', 'system.manager/index/info,system.manager/changpwd,system.manager/edits', 'layui-icon-vercode', '140', '6', '1', '1', '1', 'admin', '', '1700289715', '0', '0');
 INSERT INTO `vt_system_menus` VALUES ('147', '1', '', '内容管理', '内容管理', '', '', '', 'layui-icon-read', '0', '7', '1', '1', '1', 'admin', '', '1700289715', '0', '0');
 INSERT INTO `vt_system_menus` VALUES ('148', '1', '', '文章分组', '文章分组', '', 'cms.group/index', 'cms.group/index,cms.group/json,cms.group/save,cms.group/del,cms.group/crawl', 'layui-icon-cols', '147', '1', '1', '1', '1', 'admin', '', '1700289715', '0', '0');
-INSERT INTO `vt_system_menus` VALUES ('149', '1', '', '文章管理', '文章管理', '', 'cms.article/index', 'cms.article/index,cms.article/json,cms.article/save,cms.article/del,cms.article/view', 'layui-icon-list', '147', '2', '1', '1', '1', 'admin', '', '1700289715', '0', '0');
+INSERT INTO `vt_system_menus` VALUES ('149', '1', '', '文章管理', '文章管理', '', 'cms.article/index', 'cms.article/index,cms.article/json,cms.article/save,cms.article/del,cms.article/view,cms.ai/rewrite', 'layui-icon-list', '147', '2', '1', '1', '1', 'admin', '', '1700289715', '0', '0');
+INSERT INTO `vt_system_menus` VALUES ('150', '1', '', 'AI内容生成', 'AI内容生成', '', 'cms.ai/index', 'cms.ai/index,cms.ai/gen,cms.ai/rewrite', 'layui-icon-engine', '147', '3', '1', '1', '1', 'admin', '', '1700289715', '0', '0');
+INSERT INTO `vt_system_menus` VALUES ('152', '1', '', 'AI模板', 'AI模板', '', 'pool.aitpl/index', 'pool.aitpl/index,pool.aitpl/gen', 'layui-icon-engine', '130', '7', '1', '1', '1', 'admin', '', '1700289715', '0', '0');
+INSERT INTO `vt_system_menus` VALUES ('153', '1', '', 'AI配置', 'AI配置', '', 'system.ai/index', 'system.ai/index,system.ai/save', 'layui-icon-engine', '2', '14', '1', '1', '1', '', '', '1700289715', '0', '0');
 
 
 -- ----------------------------
@@ -523,8 +526,8 @@ ueditor:百度编辑器
 cherrymd:CherryMarkdown
 editormd:Editor.md
 tinymce:TinyMCE编辑器', '', '配置类型，每行为一组如：标识:说明', '', '0', '2', '', '1', '', '', '1475240646', '0', '0');
-INSERT INTO `vt_system_setting` VALUES ('3', 'sys_title', '面板名称', 'system', 'text', '烟雨蜘蛛池系统', '', '后台管理面板显示的名称', '', '0', '2', '', '1', '', '', '1475240646', '0', '0');
-INSERT INTO `vt_system_setting` VALUES ('4', 'site_title', '网站名称', 'system', 'text', '烟雨蜘蛛池系统', '', '网站标题名称', '', '0', '2', '', '1', '', '', '1475240646', '0', '0');
+INSERT INTO `vt_system_setting` VALUES ('3', 'sys_title', '面板名称', 'system', 'text', 'YanyvSEO', '', '后台管理面板显示的名称', '', '0', '2', '', '1', '', '', '1475240646', '0', '0');
+INSERT INTO `vt_system_setting` VALUES ('4', 'site_title', '网站名称', 'system', 'text', 'YanyvSEO', '', '网站标题名称', '', '0', '2', '', '1', '', '', '1475240646', '0', '0');
 INSERT INTO `vt_system_setting` VALUES ('5', 'admin_captcha', '后台验证', 'system', 'switch', '0', '', '后台管理员登录是否开启图形验证码', '', '0', '3', '', '1', '', '', '1475240646', '0', '0');
 INSERT INTO `vt_system_setting` VALUES ('6', 'admin_log', '后台日志', 'system', 'switch', '1', '', '是否开启后台操作日志', '', '0', '4', '', '1', '', '', '1475240646', '0', '0');
 INSERT INTO `vt_system_setting` VALUES ('7', 'home_log', '前台日志', 'system', 'switch', '0', '', '是否开启前台访问日志', '', '0', '5', '', '1', '', '', '1475240646', '0', '0');
@@ -575,7 +578,7 @@ INSERT INTO `vt_system_setting` VALUES ('41', 'aliyun_endpoint', '上传节点 E
 INSERT INTO `vt_system_setting` VALUES ('42', 'sys_author', '作者', 'system', 'text', '嗷呜awa', '', '系统作者', '', '0', '2', '', '1', '', '', '1475240646', '0', '0');
 INSERT INTO `vt_system_setting` VALUES ('43', 'sys_site', '官网地址', 'system', 'text', '', '', '系统官网地址', '', '0', '2', '', '1', '', '', '1475240646', '0', '0');
 INSERT INTO `vt_system_setting` VALUES ('44', 'sys_source', '开源地址', 'system', 'text', '', '', '系统开源仓库地址', '', '0', '2', '', '1', '', '', '1475240646', '0', '0');
-INSERT INTO `vt_system_setting` VALUES ('45', 'sys_copyright', '页脚版权', 'system', 'text', 'Copyright (C) 2026 烟雨蜘蛛池系统 All Rights Reserved.', '', '前台/后台页脚显示的版权信息', '', '0', '2', '', '1', '', '', '1475240646', '0', '0');
+INSERT INTO `vt_system_setting` VALUES ('45', 'sys_copyright', '页脚版权', 'system', 'text', 'Copyright (C) 2026 YanyvSEO All Rights Reserved.', '', '前台/后台页脚显示的版权信息', '', '0', '2', '', '1', '', '', '1475240646', '0', '0');
 INSERT INTO `vt_system_setting` VALUES ('47', 'pool_pay_api', '易支付接口', 'system', 'text', '', '', '易支付兼容API提交地址,如 https://pay.example.com/', '', '0', '21', '', '1', '', '', '1475240646', '0', '0');
 INSERT INTO `vt_system_setting` VALUES ('48', 'pool_pay_pid', '商户PID', 'system', 'text', '', '', '易支付商户ID', '', '0', '22', '', '1', '', '', '1475240646', '0', '0');
 INSERT INTO `vt_system_setting` VALUES ('49', 'pool_pay_key', '商户密钥', 'system', 'password', '', '', '易支付商户密钥', '', '0', '23', '', '1', '', '', '1475240646', '0', '0');
@@ -852,6 +855,8 @@ CREATE TABLE `vt_cms_article` (
   `content` mediumtext COMMENT '文章内容',
   `state` tinyint(1) unsigned NOT NULL DEFAULT '1' COMMENT '状态1启用0停用',
   `add_time` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '添加时间',
+  `upd_time` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '更新时间',
+  `del_time` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '删除时间',
   PRIMARY KEY (`articleid`),
   KEY `groupid` (`groupid`,`state`),
   KEY `title` (`title`)

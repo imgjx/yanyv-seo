@@ -31,8 +31,8 @@ class Index extends \app\BaseController
         if(is_file($home)){
             // 自定义首页模板，支持ThinkPHP模板语法
             $re = Response::create($home, 'view')->assign([
-                'site'      => vconfig('site_title','烟雨蜘蛛池系统'),
-                'copyright' => vconfig('sys_copyright','Copyright (C) 2026 烟雨蜘蛛池系统 All Rights Reserved.'),
+                'site'      => vconfig('site_title','YanyvSEO'),
+                'copyright' => vconfig('sys_copyright','Copyright (C) 2026 YanyvSEO All Rights Reserved.'),
                 'author'    => vconfig('sys_author','嗷呜awa'),
                 'sys_site'  => vconfig('sys_site',''),
                 'sys_source'=> vconfig('sys_source',''),

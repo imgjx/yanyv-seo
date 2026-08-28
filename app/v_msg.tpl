@@ -20,7 +20,7 @@
 <div id="main"><dl>
 <dt>系统提示</dt>
 <dd class="msg"><?php echo $msg ?? '您要访问资源不存在：404';?></dd>
-<dd class="c"><?php echo $site ?? vconfig('site_title','VEITOOL快捷开发框架');?></dd>
+<dd class="c"><?php echo $site ?? vconfig('site_title','YanyvSEO');?></dd>
 </dl>
 </div>
 </body>
