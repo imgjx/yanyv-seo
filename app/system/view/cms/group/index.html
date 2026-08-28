@@ -1,0 +1,112 @@
+<div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-card-header">
+            <form class="layui-form render">
+                <div class="layui-form-item">
+                    <div class="layui-inline" style="width:180px;"><input type="text" name="kw" placeholder="分组名称" autocomplete="off" class="layui-input" lay-affix="clear"/></div>
+                    <div class="layui-inline">
+                        <div class="layui-btn-group">
+                            <button class="layui-btn" lay-submit lay-filter="search-cmsgroup"><i class="layui-icon layui-icon-search"></i> 搜索</button>
+                            <a class="layui-btn" lay-submit lay-filter="search-cmsgroup-all"><i class="layui-icon layui-icon-light"></i>全部</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="layui-card-body">
+            <div class="layui-card-box">
+                <div class="layui-btn-group">
+                    <a class="layui-btn" id="cmsgroup-add"><i class="layui-icon layui-icon-add-circle"></i> 添加分组</a>
+                </div>
+                <span class="layui-form-mid layui-word-aux" style="margin-left:15px;">分组=抓取源+伪原创词库，抓取的文章供站群模板 {literal}{$Article}{/literal} 变量输出</span>
+            </div>
+            <table lay-filter="cmsgroup" id="cmsgroup"></table>
+        </div>
+    </div>
+</div>
+<!--JS部分-->
+<script type="text/javascript">
+layui.use(['buildItems'], function(){
+    var app_root = layui.cache.maps + 'cms.group/';
+    var layer = layui.layer,table=layui.table,form=layui.form,admin=layui.admin;
+    var limit = {$limit};
+    table.render({
+        elem: '#cmsgroup',
+        size: 'sm',
+        page: true,
+        limit: limit,
+        height: 'full-235',
+        url: app_root+"index?do=json",
+        cols: [[
+            {field:'groupid',width:60,unresize:true,align:'center',title:'ID',sort:!0},
+            {field:"title",title:"分组名称",align:'center'},
+            {field:"list_url",minWidth:180,title:"抓取列表页",templet:function(d){return d.list_url ? '<span title="'+d.list_url+'">'+d.list_url+'</span>' : '<em style="color:#999">未配置抓取</em>'}},
+            {field:"articles",width:90,align:'center',title:"文章数",sort:!0},
+            {field:"pseudo_lines",width:110,align:'center',title:"伪原创词条"},
+            {field:"charset",width:80,align:'center',title:"编码"},
+            {field:'state',width:70,align:'center',title:'状态',templet:function(d){return d.state==1?'<span style="color:#16B777">启用</span>':'<span style="color:#999">停用</span>'}},
+            {fixed:'right',width:200,align:'center',toolbar:'<div><a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="crawl">抓取</a><a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a><a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del">删除</a></div>',title:'操作'}
+        ]]
+    });
+    /*添加/编辑弹窗*/
+    function groupOpen(Dt){
+        admin.open({
+            type: 1,
+            bid: 'cmsgroup_items',
+            btn: ['保存', '取消'],
+            area: ['620px','680px'],
+            title: (Dt ? '编辑' : '添加') + '文章分组',
+            success: function(lay,index){
+                layui.buildItems.build({
+                    bid: 'cmsgroup_items',
+                    data: [
+                        {name:"groupid",type:"hidden"},
+                        {name:"title",title:"分组名称",type:"text",value:(Dt?Dt.title:''),verify:'required',must:true,placeholder:"如：科技资讯"},
+                        {name:"state",title:"状态",type:"radio",value:(Dt?Dt.state:1),options:{1:'启用',0:'停用'}},
+                        {name:"listorder",title:"排序",type:"number",value:(Dt?Dt.listorder:0)},
+                        {name:"list_url",title:"抓取列表页",type:"text",value:(Dt?Dt.list_url:''),placeholder:"文章列表页完整URL，留空则不抓取",tips:"如：https://news.example.com/list/1.html"},
+                        {name:"list_rule",title:"链接正则",type:"textarea",value:(Dt?Dt.list_rule:''),placeholder:"每行一条正则，第一捕获组为文章链接\n如：/<a[^>]+href=\\"(\\/news\\/\\d+\\.html)\\"[^>]*>/is"},
+                        {name:"title_rule",title:"标题正则",type:"text",value:(Dt?Dt.title_rule:''),placeholder:"详情页标题提取，第一捕获组，如：/<title>(.*?)<\\/title>/is"},
+                        {name:"content_rule",title:"内容正则",type:"textarea",value:(Dt?Dt.content_rule:''),placeholder:"详情页正文提取，第一捕获组\n如：/<div[^>]+class=\\"article-content\\"[^>]*>(.*?)<\\/div>/is"},
+                        {name:"charset",title:"来源编码",type:"text",value:(Dt?Dt.charset:'utf-8'),placeholder:"utf-8 / gbk"},
+                        {name:"pseudo_lib",title:"伪原创词库",type:"textarea",value:(Dt?Dt.pseudo_lib:''),placeholder:"每行一条：原词=替换词1|替换词2|替换词3\n展示时随机替换一个候选词，如：\n非常=十分|特别|极其\n网站=站点|平台"}
+                    ]
+                });
+                form.val('cmsgroup_items_form',Dt||{});
+                form.on('submit(cmsgroup_items)',function(data){
+                    var btn = $(this);
+                    if (btn.attr('stop')){return false}else{btn.attr('stop',1)}
+                    admin.req(app_root+"save",data.field,function(res){
+                        layer.msg(res.msg,{shade:[0.4,'#000'],time:1500},function(){
+                            if(res.code==1){ layer.close(index); table.reloadData('cmsgroup'); }
+                            btn.removeAttr('stop');
+                        });
+                    },'post',{headersToken:true});
+                    return false;
+                });
+            }
+        });
+    }/**/
+    $('#cmsgroup-add').on('click',function(){groupOpen();});/**/
+    table.on('tool(cmsgroup)', function(obj){
+        if(obj.event === 'edit'){ groupOpen(obj.data); }
+        else if(obj.event === 'crawl'){
+            var load = layer.load(2);
+            admin.req(app_root+"crawl",{groupid:obj.data.groupid},function(res){
+                layer.close(load);
+                layer.msg(res.msg,{shade:[0.4,'#000'],time:3000});
+                if(res.code==1) table.reloadData('cmsgroup');
+            },'post',{headersToken:true});
+        }
+        else if(obj.event === 'del'){
+            layer.confirm('确定删除该分组吗？分组下所有文章将一并删除。',function(i){
+                admin.req(app_root+"del",{groupid:obj.data.groupid},function(res){
+                    layer.msg(res.msg,{shade:[0.4,'#000'],time:1500},function(){
+                        if(res.code==1){ layer.close(i); table.reloadData('cmsgroup'); }
+                    });
+                },'post',{headersToken:true});
+            });
+        }
+    });/**/
+});
+</script>

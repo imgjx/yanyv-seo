@@ -1,0 +1,128 @@
+<div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-card-header">
+            <form class="layui-form render">
+                <div class="layui-form-item">
+                    <div class="layui-inline" style="width:150px;">
+                        <select name="groupid" lay-filter="cmsarticle-group">
+                            <option value="0">全部分组</option>
+                            {volist name="groups" id="vo"}
+                            <option value="{$vo.groupid}">{$vo.title}</option>
+                            {/volist}
+                        </select>
+                    </div>
+                    <div class="layui-inline" style="width:180px;"><input type="text" name="kw" placeholder="文章标题" autocomplete="off" class="layui-input" lay-affix="clear"/></div>
+                    <div class="layui-inline">
+                        <div class="layui-btn-group">
+                            <button class="layui-btn" lay-submit lay-filter="search-cmsarticle"><i class="layui-icon layui-icon-search"></i> 搜索</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="layui-card-body">
+            <div class="layui-card-box">
+                <div class="layui-btn-group">
+                    <a class="layui-btn" id="cmsarticle-add"><i class="layui-icon layui-icon-add-circle"></i> 添加文章</a>
+                </div>
+                <span class="layui-form-mid layui-word-aux" style="margin-left:15px;">文章按所属分组的伪原创词库实时替换后输出到站群模板</span>
+            </div>
+            <table lay-filter="cmsarticle" id="cmsarticle"></table>
+        </div>
+    </div>
+</div>
+<!--JS部分-->
+<script type="text/javascript">
+layui.use(['buildItems'], function(){
+    var app_root = layui.cache.maps + 'cms.article/';
+    var layer = layui.layer,table=layui.table,form=layui.form,admin=layui.admin;
+    var limit = {$limit};
+    var Groups = {$groups|json_encode|raw};
+    var gOpts = {};
+    layui.each(Groups,function(i,v){ gOpts[v.groupid] = v.title; });
+    table.render({
+        elem: '#cmsarticle',
+        size: 'sm',
+        page: true,
+        limit: limit,
+        height: 'full-235',
+        url: app_root+"index?do=json",
+        where: {groupid: 0},
+        cols: [[
+            {field:'articleid',width:60,unresize:true,align:'center',title:'ID',sort:!0},
+            {field:"title",minWidth:220,title:"标题"},
+            {field:"group_name",width:110,align:'center',title:"所属分组"},
+            {field:"size",width:90,align:'center',title:"字数",sort:!0},
+            {field:'state',width:70,align:'center',title:'状态',templet:function(d){return d.state==1?'<span style="color:#16B777">启用</span>':'<span style="color:#999">停用</span>'}},
+            {fixed:'right',width:170,align:'center',toolbar:'<div><a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="view">预览</a><a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a><a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del">删除</a></div>',title:'操作'}
+        ]]
+    });
+    /*分组筛选*/
+    form.on('select(cmsarticle-group)',function(data){
+        table.reload('cmsarticle',{where:{groupid:data.value},page:{curr:1}});
+    });/**/
+    /*添加/编辑弹窗*/
+    function articleOpen(Dt){
+        admin.open({
+            type: 1,
+            bid: 'cmsarticle_items',
+            btn: ['保存', '取消'],
+            area: ['640px','640px'],
+            title: (Dt ? '编辑' : '添加') + '文章',
+            success: function(lay,index){
+                layui.buildItems.build({
+                    bid: 'cmsarticle_items',
+                    data: [
+                        {name:"articleid",type:"hidden"},
+                        {name:"groupid",title:"所属分组",type:"select",value:(Dt?Dt.groupid:(Groups[0]?Groups[0].groupid:0)),options:gOpts,tips:"文章展示时按该分组的伪原创词库实时替换"},
+                        {name:"state",title:"状态",type:"radio",value:(Dt?Dt.state:1),options:{1:'启用',0:'停用'}},
+                        {name:"title",title:"文章标题",type:"text",value:(Dt?Dt.title:''),verify:'required',must:true,placeholder:"请输入文章标题"},
+                        {name:"content",title:"正文内容",type:"textarea",value:(Dt?Dt.content:''),placeholder:"支持HTML标签",must:true}
+                    ]
+                });
+                form.val('cmsarticle_items_form',Dt||{});
+                form.on('submit(cmsarticle_items)',function(data){
+                    var btn = $(this);
+                    if (btn.attr('stop')){return false}else{btn.attr('stop',1)}
+                    admin.req(app_root+"save",data.field,function(res){
+                        layer.msg(res.msg,{shade:[0.4,'#000'],time:1500},function(){
+                            if(res.code==1){ layer.close(index); table.reloadData('cmsarticle'); }
+                            btn.removeAttr('stop');
+                        });
+                    },'post',{headersToken:true});
+                    return false;
+                });
+            }
+        });
+    }/**/
+    /*伪原创效果预览*/
+    function articleView(Dt){
+        var load = layer.load(2);
+        admin.req(app_root+"view",{articleid:Dt.articleid},function(res){
+            layer.close(load);
+            if(res.code==1){
+                layer.open({
+                    type:1,area:['700px','600px'],title:'伪原创效果预览（替换后内容）',
+                    content:'<div style="padding:15px;line-height:1.8;overflow:auto;height:520px;"><h2 style="margin-bottom:10px;">'+res.data.title+'</h2>'+res.data.content+'</div>'
+                });
+            }else{
+                layer.msg(res.msg);
+            }
+        },'post',{headersToken:true});
+    }/**/
+    $('#cmsarticle-add').on('click',function(){articleOpen();});/**/
+    table.on('tool(cmsarticle)', function(obj){
+        if(obj.event === 'edit'){ articleOpen(obj.data); }
+        else if(obj.event === 'view'){ articleView(obj.data); }
+        else if(obj.event === 'del'){
+            layer.confirm('确定删除该文章吗？',function(i){
+                admin.req(app_root+"del",{articleid:obj.data.articleid},function(res){
+                    layer.msg(res.msg,{shade:[0.4,'#000'],time:1500},function(){
+                        if(res.code==1){ layer.close(i); table.reloadData('cmsarticle'); }
+                    });
+                },'post',{headersToken:true});
+            });
+        }
+    });/**/
+});
+</script>

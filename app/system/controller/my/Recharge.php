@@ -51,7 +51,8 @@ class Recharge extends AdminBase
         $api = rtrim(strval(vconfig('pool_pay_api')), '/');
         $pid = strval(vconfig('pool_pay_pid'));
         $key = strval(vconfig('pool_pay_key'));
-        if(!$api || !$pid || !$key) return $this->returnMsg('系统未配置支付接口，请联系管理员！');
+        if(!$key) return $this->returnMsg('系统未配置支付接口，请联系管理员！');
+        if(!$api || !$pid) return $this->returnMsg('支付接口地址或商户PID未配置完整，请联系管理员！');
         $d = $this->only(['@token'=>'','@money/f','type/s']);
         $mode = vconfig('pool_pay_mode','mixed');
         $fixed = $this->fixedList();
@@ -102,7 +103,9 @@ class Recharge extends AdminBase
         $param['sign'] = strtoupper(md5($str.$key));
         $param['sign_type'] = 'MD5';
         Lock::del(['key'=>'PAY_'.$this->manUser['userid']]);
-        return $this->returnMsg(['url'=>$api.'/submit.php?'.http_build_query($param), 'orderid'=>$orderid],1);
+        //兼容网关根地址与完整提交地址两种配置写法
+        $submit = preg_match('#/submit\.php$#i', $api) ? $api : $api.'/submit.php';
+        return $this->returnMsg(['url'=>$submit.'?'.http_build_query($param), 'orderid'=>$orderid],1);
     }
 
     /**

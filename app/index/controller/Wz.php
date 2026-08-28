@@ -14,6 +14,7 @@ use app\model\pool\Site as SiteM;
 use app\model\pool\Engine as EngineM;
 use app\model\pool\Link as LinkM;
 use app\model\pool\Template as TplM;
+use app\model\cms\Article as ArticleM;
 use think\Response;
 use think\facade\Db;
 use think\facade\View;
@@ -113,11 +114,21 @@ class Wz extends BaseController
               ->orderRaw('rand()')->limit($show)->column('url');
             foreach($urls as $u){ $links[] = ['url' => strval($u)]; }
         }
+        //内容管理文章：列表(随机8条) + 详情(路由id匹配,按分组伪原创)
+        $Art = ['list'=>[], 'detail'=>null];
+        try{
+            $aid = isset($params['id']) && preg_match('/^\d+$/', strval($params['id'])) ? intval($params['id']) : 0;
+            if($aid && ($d = (new ArticleM())->displayContent($aid))) $Art['detail'] = $d;
+            foreach(ArticleM::where('state',1)->orderRaw('rand()')->limit(8)->select() as $a){
+                $Art['list'][] = ['articleid'=>$a->articleid,'title'=>$a->title,'url'=>'?id='.$a->articleid,'time'=>date('Y-m-d',$a->add_time)];
+            }
+        }catch(\Throwable $e){}
         View::assign(array_merge($params, [
             'site'       => array_merge($this->site, ['host'=>$this->request->host()]),
             'cid'        => strip_sql(strval($cid)),
             'engine'     => $spider,
             'GuideLinks' => $links,
+            'Article'    => $Art,
             'Content'    => $cms['Content'] ?? '',
             'Cms'        => $cms,
             'copyright'  => vconfig('sys_copyright'),

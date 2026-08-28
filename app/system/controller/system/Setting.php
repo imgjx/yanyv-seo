@@ -80,13 +80,17 @@ class Setting extends AdminBase
                 $name = $v['name'];
                 if(in_array($name, ['sys_group','sys_type'])) continue; //系统关键配置项不可修改 开发模式请注释该行
                 if($v['type'] == 'checkbox'){
+                    //checkbox未勾选时浏览器不会提交该字段，需显式清空
                     $data['value'] = isset($d[$name]) && is_array($d[$name]) ? implode(',', $d[$name]) : '';
+                }elseif(!array_key_exists($name, $d)){
+                    //未提交的字段一律跳过，避免分组表单提交时误清空其他字段
+                    continue;
                 }elseif($v['type'] == 'image'){
-                    $data['value'] = $d[$name] ?? '';
+                    $data['value'] = $d[$name];
                 }elseif($v['type'] == 'images'){
-                    $data['value'] = isset($d[$name]) && is_array($d[$name]) ? json_encode($d[$name]) : '';
+                    $data['value'] = is_array($d[$name]) ? json_encode($d[$name]) : '';
                 }else{
-                    $data['value'] = $d[$name] ?? 0;
+                    $data['value'] = $d[$name];
                     if($v['private'] && strpos($data['value'], '***') !== false) continue;
                 }
                 $data['upd_time'] = $time;

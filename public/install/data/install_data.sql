@@ -219,7 +219,7 @@ CREATE TABLE `vt_system_menus` (
   `upd_time` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '修改时间',
   `del_time` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '删除时间',
   PRIMARY KEY (`menuid`)
-) ENGINE=InnoDB AUTO_INCREMENT=147 DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC COMMENT='菜单权限';
+) ENGINE=InnoDB AUTO_INCREMENT=150 DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC COMMENT='菜单权限';
 
 -- Records of vt_system_menus
 -- ----------------------------
@@ -367,6 +367,9 @@ INSERT INTO `vt_system_menus` VALUES ('143', '1', '', '我的链接', '我的链
 INSERT INTO `vt_system_menus` VALUES ('144', '1', '', '在线充值', '在线充值', '', 'my.recharge/index', 'my.recharge/index,my.recharge/order,my.recharge/query', 'layui-icon-rmb', '140', '4', '1', '1', '1', 'admin', '', '1700289715', '0', '0');
 INSERT INTO `vt_system_menus` VALUES ('145', '1', '', '财务记录', '财务记录', '', 'my.pointslog/index', 'my.pointslog/index,my.pointslog/json', 'layui-icon-log', '140', '5', '1', '1', '1', 'admin', '', '1700289715', '0', '0');
 INSERT INTO `vt_system_menus` VALUES ('146', '1', '', '个人中心', '个人中心', '', 'system.manager/index?action=info', 'system.manager/index/info,system.manager/changpwd,system.manager/edits', 'layui-icon-vercode', '140', '6', '1', '1', '1', 'admin', '', '1700289715', '0', '0');
+INSERT INTO `vt_system_menus` VALUES ('147', '1', '', '内容管理', '内容管理', '', '', '', 'layui-icon-read', '0', '7', '1', '1', '1', 'admin', '', '1700289715', '0', '0');
+INSERT INTO `vt_system_menus` VALUES ('148', '1', '', '文章分组', '文章分组', '', 'cms.group/index', 'cms.group/index,cms.group/json,cms.group/save,cms.group/del,cms.group/crawl', 'layui-icon-cols', '147', '1', '1', '1', '1', 'admin', '', '1700289715', '0', '0');
+INSERT INTO `vt_system_menus` VALUES ('149', '1', '', '文章管理', '文章管理', '', 'cms.article/index', 'cms.article/index,cms.article/json,cms.article/save,cms.article/del,cms.article/view', 'layui-icon-list', '147', '2', '1', '1', '1', 'admin', '', '1700289715', '0', '0');
 
 
 -- ----------------------------
@@ -437,7 +440,7 @@ CREATE TABLE `vt_system_roles` (
 -- Records of vt_system_roles
 -- ----------------------------
 INSERT INTO `vt_system_roles` VALUES ('1', '超级管理员', '', '', '1', '1', '', '', '1552297670', '0', '0');
-INSERT INTO `vt_system_roles` VALUES ('2', '管理员', ',1,3,130,131,132,133,134,135,136,137,138,139,', '', '2', '1', '', '', '1552297670', '0', '0');
+INSERT INTO `vt_system_roles` VALUES ('2', '管理员', ',1,3,130,131,132,133,134,135,136,137,138,139,147,148,149,', '', '2', '1', '', '', '1552297670', '0', '0');
 INSERT INTO `vt_system_roles` VALUES ('3', '注册用户', ',140,141,142,143,144,145,146,', '', '3', '1', 'admin', '', '1475240646', '0', '0');
 
 
@@ -819,6 +822,40 @@ CREATE TABLE `vt_pool_points_log` (
   PRIMARY KEY (`pid`),
   KEY `userid` (`userid`,`add_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC COMMENT='积分明细';
+
+-- ----------------------------
+-- Table structure for vt_cms_group
+-- ----------------------------
+CREATE TABLE `vt_cms_group` (
+  `groupid` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '分组ID',
+  `title` varchar(30) NOT NULL DEFAULT '' COMMENT '分组名称',
+  `list_url` varchar(255) NOT NULL DEFAULT '' COMMENT '抓取列表页URL',
+  `list_rule` text COMMENT '链接正则(每行一条)',
+  `title_rule` varchar(255) NOT NULL DEFAULT '' COMMENT '详情标题正则',
+  `content_rule` text COMMENT '详情内容正则',
+  `charset` varchar(15) NOT NULL DEFAULT 'utf-8' COMMENT '来源编码',
+  `pseudo_lib` mediumtext COMMENT '伪原创词库(每行 原词=替换1|替换2)',
+  `state` tinyint(1) unsigned NOT NULL DEFAULT '1' COMMENT '状态1启用0停用',
+  `listorder` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '排序',
+  `creator` varchar(30) NOT NULL DEFAULT '' COMMENT '创建者',
+  `add_time` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '创建时间',
+  PRIMARY KEY (`groupid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC COMMENT='CMS文章分组';
+
+-- ----------------------------
+-- Table structure for vt_cms_article
+-- ----------------------------
+CREATE TABLE `vt_cms_article` (
+  `articleid` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '文章ID',
+  `groupid` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '所属分组ID',
+  `title` varchar(100) NOT NULL DEFAULT '' COMMENT '文章标题',
+  `content` mediumtext COMMENT '文章内容',
+  `state` tinyint(1) unsigned NOT NULL DEFAULT '1' COMMENT '状态1启用0停用',
+  `add_time` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '添加时间',
+  PRIMARY KEY (`articleid`),
+  KEY `groupid` (`groupid`,`state`),
+  KEY `title` (`title`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC COMMENT='CMS文章';
 
 -- ----------------------------
 -- Records of vt_pool_engine
