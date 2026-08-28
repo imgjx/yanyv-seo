@@ -116,12 +116,15 @@ class Wz extends BaseController
               ->orderRaw('rand()')->limit($show)->column('url');
             foreach($urls as $u){ $links[] = ['url' => strval($u)]; }
         }
-        //内容管理文章：列表(随机8条) + 详情(路由id匹配,按分组伪原创)
+        //内容管理文章：列表(随机8条,绑定分组则取该分组) + 详情(路由id匹配,按分组伪原创)
         $Art = ['list'=>[], 'detail'=>null];
         try{
+            $gid = intval($this->site['cms_groupid'] ?? 0);
+            $q = ArticleM::where('state',1);
+            if($gid) $q = $q->where('groupid',$gid);
             $aid = isset($params['id']) && preg_match('/^\d+$/', strval($params['id'])) ? intval($params['id']) : 0;
             if($aid && ($d = (new ArticleM())->displayContent($aid))) $Art['detail'] = $d;
-            foreach(ArticleM::where('state',1)->orderRaw('rand()')->limit(8)->select() as $a){
+            foreach($q->orderRaw('rand()')->limit(8)->select() as $a){
                 $Art['list'][] = ['articleid'=>$a->articleid,'title'=>$a->title,'url'=>'?id='.$a->articleid,'time'=>date('Y-m-d',$a->add_time)];
             }
         }catch(\Throwable $e){}
@@ -163,6 +166,7 @@ class Wz extends BaseController
             if($en['match_mode'] == 1){
                 $okIp = true; //仅UA模式不校验IP
             }else{
+                $okIp = false; //ip_rules为空则视为IP不匹配
                 foreach(explode("\n", strval($en['ip_rules'])) as $rule){
                     $rule = trim($rule);
                     if($rule === '') continue;
