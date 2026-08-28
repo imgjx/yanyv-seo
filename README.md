@@ -96,4 +96,4 @@ php think run          # 默认 8000 端口
 - 本系统基于 [Veitool V2.3.5](https://www.veitool.com) 框架二次开发，框架采用 [Apache2.0](https://opensource.org/license/apache-2-0/) 协议发布
 - 本系统以 Apache License 2.0 协议开源（详见 [LICENSE](LICENSE)）
 
-官方网站&介绍页：[YanyvSEO](https://seo.yanyv.cc/)
+Copyright (C) 2026 烟雨蜘蛛池系统 All Rights Reserved. Powered by [YanyvSEO](https://seo.yanyv.cc/)
