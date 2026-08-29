@@ -98,7 +98,7 @@ layui.use([], function(){
                         clearInterval(timer);
                         layer.msg('充值成功！到账 '+q.data.points+' 积分',{icon:1,time:2000},function(){ location.reload(); });
                     }
-                },'post',{headersToken:true});
+                },'get');
             },3000);
             setTimeout(function(){ clearInterval(timer); },120000);
             window.open(res.data.url);

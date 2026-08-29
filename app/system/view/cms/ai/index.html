@@ -31,13 +31,8 @@
                 <div class="layui-form-item">
                     <label class="layui-form-label">生成提示词</label>
                     <div class="layui-input-block">
-                        <textarea name="prompt" id="ai_prompt" lay-vertype="tips" lay-verify="required" class="layui-textarea" style="height:280px;" placeholder="{$date} 将自动替换为当前年月日">{$prompt|raw}</textarea>
-                        <div class="layui-form-mid layui-word-aux">提示词随每次生成直接提交生效；{literal}{date}{/literal} 自动替换为当前年月日（{$date}）；可点"保存提示词"设为默认。</div>
-                    </div>
-                </div>
-                <div class="layui-form-item">
-                    <div class="layui-input-block">
-                        <button class="layui-btn layui-btn-primary layui-btn-sm" lay-submit lay-filter="ai-prompt-save"><i class="layui-icon layui-icon-ok"></i> 保存提示词</button>
+                        <textarea name="prompt" id="ai_prompt" lay-vertype="tips" lay-verify="required" class="layui-textarea" style="height:280px;" placeholder="请手动填写本次生成提示词；{$date} 将自动替换为当前年月日"></textarea>
+                        <div class="layui-form-mid layui-word-aux">提示词每次生成前手动填写，随请求直接提交生效；{literal}{date}{/literal} 自动替换为当前年月日（{$date}）。</div>
                     </div>
                 </div>
             </form>
@@ -50,16 +45,6 @@ layui.use(['form'], function(){
     var form = layui.form, layer = layui.layer, admin = layui.admin, $ = layui.$;
     var ready = {$ready|intval};
     $('#ai_state').html(ready ? '<span style="color:#16B777;">● AI接口已配置</span>' : '<span style="color:#FF5722;">● 请先在 系统管理->AI配置 完成配置</span>');
-    /*保存提示词*/
-    form.on('submit(ai-prompt-save)',function(data){
-        var btn = $(this);
-        if(btn.attr('stop')){return false}else{btn.attr('stop',1)}
-        admin.req(app_root+"save",{prompt:data.field.prompt},function(res){
-            layer.msg(res.msg,{time:1500});
-            btn.removeAttr('stop');
-        },'post',{headersToken:true});
-        return false;
-    });
     /*批量生成：创建任务后打开状态页*/
     form.on('submit(ai-gen)',function(data){
         var btn = $(this);

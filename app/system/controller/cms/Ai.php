@@ -18,20 +18,6 @@ use tool\Ai as AiTool;
 class Ai extends AdminBase
 {
     /**
-     * 内置默认生成提示词：Markdown文章，拟人化、无emoji、无AI味
-     */
-    const DEFAULT_PROMPT = '你是一名从业十年的中文自媒体编辑，请围绕当下热点自拟主题，写一篇全新的中文文章。
-要求：
-1. 直接输出Markdown格式文章，第一行用 "# 标题" 给出文章标题；
-2. 全文800-1500字，分段清晰，可有二级标题与列表；
-3. 语言自然拟人化，像真人写的经验分享，观点有细节有事例；
-4. 严禁使用任何emoji表情、禁止出现"作为AI""人工智能助手"等字眼；
-5. 禁止使用"总而言之""综上所述""首先/其次/最后"等模板化套话；
-6. 文章中自然融入当前日期：{date}。
-
-当前日期：{date}';
-
-    /**
      * 内置默认重写提示词：结构与原文完全不同
      */
     const DEFAULT_REWRITE = '你是一名从业十年的中文编辑。请在保留原文核心信息与观点的前提下，把下面这篇文章彻底重写：
@@ -45,14 +31,13 @@ class Ai extends AdminBase
 {content}';
 
     /**
-     * AI内容生成页
+     * AI内容生成页（提示词留空，每次手动填写）
      */
     public function index()
     {
         $this->assign([
             'ready'  => AiTool::ready(),
             'groups' => GM::allGroups(),
-            'prompt' => trim(strval(vconfig('ai_article_prompt',''))) ?: self::DEFAULT_PROMPT,
             'date'   => date('Y年m月d日')
         ]);
         return $this->fetch();
@@ -84,13 +69,11 @@ class Ai extends AdminBase
     }
 
     /**
-     * 保存生成提示词
+     * 保存生成提示词（已废弃，提示词每次手动填写）
      */
     public function save()
     {
-        $d = $this->only(['@token'=>'','@prompt/s'], 'post', '', false);
-        $this->saveSetting('ai_article_prompt', 'AI文章提示词', trim(strval($d['prompt'])), 5);
-        return $this->returnMsg('提示词已保存', 1);
+        return $this->returnMsg('生成提示词请每次在生成时直接填写');
     }
 
     /**
@@ -99,7 +82,7 @@ class Ai extends AdminBase
     public function saveRewrite()
     {
         $d = $this->only(['@token'=>'','@prompt/s'], 'post', '', false);
-        $this->saveSetting('ai_rewrite_prompt', '文章重写提示词', trim(strval($d['prompt'])), 6);
+        $this->saveSetting('ai_rewrite_prompt', '重写文章提示词', trim(strval($d['prompt'])), 6);
         return $this->returnMsg('提示词已保存', 1);
     }
 
@@ -115,7 +98,7 @@ class Ai extends AdminBase
         $rounds = max(1, min(50, intval($d['rounds'] ?? 1)));
         $conc   = max(1, min(10, intval($d['concurrency'] ?? 3)));
         $prompt = trim(strval($d['prompt']));
-        if($prompt === '') $prompt = self::DEFAULT_PROMPT;
+        if($prompt === '') return $this->returnMsg('请填写生成提示词');
         $task = TM::create([
             'type'=>'gen','groupid'=>$groupid,'ids'=>'','prompt'=>$prompt,
             'concurrency'=>$conc,'total'=>$rounds,'done'=>0,'fail'=>0,'offset'=>0,
@@ -152,7 +135,8 @@ class Ai extends AdminBase
      */
     public function step()
     {
-        $d = $this->only(['@token'=>'','@taskid/d'],'post','',false);
+        //GET轮询：避免消耗CSRF token，防止与其他页面保存操作冲突
+        $d = $this->only(['@taskid/d'],'get','',false);
         $task = TM::one(['taskid'=>intval($d['taskid'])]);
         if(!$task) return $this->returnMsg('任务不存在');
         if(intval($task->state) === 1) return $this->returnMsg(['task'=>$task->status()], 1);

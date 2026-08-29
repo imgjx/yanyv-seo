@@ -66,7 +66,8 @@ class Aitpl extends AdminBase
      */
     public function step()
     {
-        $d = $this->only(['@token'=>'','@taskid/d'],'post','',false);
+        //GET轮询：避免消耗CSRF token，防止与其他页面保存操作冲突
+        $d = $this->only(['@taskid/d'],'get','',false);
         $task = TM::one(['taskid'=>intval($d['taskid'])]);
         if(!$task) return $this->returnMsg('任务不存在');
         if(intval($task->state) === 1) return $this->returnMsg(['task'=>$task->status()], 1);

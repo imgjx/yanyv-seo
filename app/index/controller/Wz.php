@@ -82,7 +82,7 @@ class Wz extends BaseController
         }
         //SEO关键词模式：URL自带关键词(蜘蛛受kw_spider开关控制) > 词库随机
         $kw = $this->pickKeyword($params, $isSpider);
-        //蜘蛛来访：按302强引占比决定是否直接跳转已投放链接（占比仅限制302强引，普通引导不限制）
+        //蜘蛛来访：302强引仅消耗强引链接并按站点占比执行；普通引导只渲染落地页消耗普通链接，绝不走302
         if($isSpider){
             //挑选一条该引擎可用的强引链接
             $jump = $this->pickLink($spider, 2);

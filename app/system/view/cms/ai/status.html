@@ -52,7 +52,7 @@ layui.use(['element'], function(){
                 stop();
                 $('#ai_task_log').text('任务异常：' + res.msg);
             }
-        }, 'post', {headersToken:true, timeout:600000});
+        }, 'get', {timeout:600000});
     }
     function stop(){ if(timer){ clearInterval(timer); timer = null; } }
     timer = setInterval(step, 1500);

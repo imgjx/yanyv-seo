@@ -51,6 +51,7 @@ class Login extends BaseController
     public function register()
     {
         if(!empty(session(VT_MANAGER))) return $this->redirect($this->appMap);
+        if(!vconfig('reg_open',1)) return $this->returnTpl('抱歉，系统已关闭注册，请联系管理员开通帐号！');
         $this->assign([
             "appMap" => $this->appMap
         ]);
@@ -62,6 +63,7 @@ class Login extends BaseController
      */
     public function doregister()
     {
+        if(!vconfig('reg_open',1)) return $this->returnMsg('抱歉，系统已关闭注册，请联系管理员开通帐号！');
         //多次尝试验证
         $ip = $this->request->ip();
         if(Lock::check(['key'=>'REG_'.$ip])) return $this->returnMsg(Lock::msg());

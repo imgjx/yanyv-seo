@@ -495,7 +495,7 @@ CREATE TABLE `vt_system_setting` (
   PRIMARY KEY (`id`),
   KEY `addon` (`addon`) USING BTREE,
   KEY `group` (`group`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=63 DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC COMMENT='系统配置';
+) ENGINE=InnoDB AUTO_INCREMENT=64 DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC COMMENT='系统配置';
 
 -- Records of vt_system_setting
 -- ----------------------------
@@ -540,6 +540,8 @@ INSERT INTO `vt_system_setting` VALUES ('9', 'ip_login', '异地登录', 'system
 1:后台允许
 2:前台允许
 3:全部禁止', '控制是否允许同帐号同时异地登录', '', '0', '10', '', '1', '', '', '1475240646', '0', '0');
+INSERT INTO `vt_system_setting` VALUES ('63', 'reg_open', '开放注册', 'system', 'radio', '1', '1:开启
+0:关闭', '关闭后前台将无法自行注册新用户', '', '0', '11', '', '1', '', '', '1475240646', '0', '0');
 INSERT INTO `vt_system_setting` VALUES ('10', 'sys_filter', '过滤字符', 'system', 'textarea', '', '', '多个用以英文逗号,隔开', '', '0', '10', '', '1', '', '', '1475240646', '0', '0');
 INSERT INTO `vt_system_setting` VALUES ('11', 'sms_state', '短信开关', 'sms', 'switch', '1', '', '', '', '0', '1', '', '1', '', '', '1475240646', '0', '0');
 INSERT INTO `vt_system_setting` VALUES ('12', 'sms_type', '发送方式', 'sms', 'radio', 'qiniu', 'qiniu:七牛短信
@@ -595,10 +597,9 @@ INSERT INTO `vt_system_setting` VALUES ('56', 'ai_api_url', 'API地址', 'ai', '
 INSERT INTO `vt_system_setting` VALUES ('57', 'ai_api_key', 'API密钥', 'ai', 'password', '', '', '接口访问密钥 sk-xxx', '', '0', '2', '', '1', 'admin', '', '1787830514', '0', '0');
 INSERT INTO `vt_system_setting` VALUES ('58', 'ai_model', '模型名称', 'ai', 'text', '', '', '如 gpt-4o-mini / glm-4-flash', '', '0', '3', '', '1', 'admin', '', '1787830514', '0', '0');
 INSERT INTO `vt_system_setting` VALUES ('59', 'ai_temperature', '采样温度', 'ai', 'number', '0.7', '', '0-2，越大越发散', '', '0', '4', '', '1', 'admin', '', '1787830514', '0', '0');
-INSERT INTO `vt_system_setting` VALUES ('60', 'ai_article_prompt', 'AI文章提示词', 'ai', 'textarea', '', '', 'AI内容生成默认提示词，{date}=当前年月日；留空使用内置模板', '', '0', '5', '', '1', 'admin', '', '1787830514', '0', '0');
 INSERT INTO `vt_system_setting` VALUES ('61', 'ai_no_stream', '不使用流式请求', 'ai', 'radio', '1', '1:开启
 0:关闭(使用流式)', '开启后AI请求不使用流式方式；若网关强制要求流式(思考模型)会自动降级为流式重试', '', '0', '6', '', '1', 'admin', '', '1787830514', '0', '0');
-INSERT INTO `vt_system_setting` VALUES ('62', 'ai_rewrite_prompt', '文章重写提示词', 'ai', 'textarea', '', '', '文章管理->重写文章 使用的提示词模板，{content}=原文正文，{date}=当前年月日；留空使用内置模板', '', '0', '7', '', '1', 'admin', '', '1787830514', '0', '0');
+INSERT INTO `vt_system_setting` VALUES ('62', 'ai_rewrite_prompt', '重写文章提示词', 'ai', 'textarea', '', '', '文章管理->重写文章 使用的提示词模板，{content}=原文正文，{date}=当前年月日；留空使用内置模板', '', '0', '7', '', '1', 'admin', '', '1787830514', '0', '0');
 
 
 -- ----------------------------

@@ -117,7 +117,8 @@ class Recharge extends AdminBase
      */
     public function query()
     {
-        $d = $this->only(['@token'=>'','@orderid/a']);
+        //GET轮询：避免消耗CSRF token，防止与其他页面保存操作冲突
+        $d = $this->only(['@orderid/a'],'get');
         $rs = MD::one(['orderid'=>$d['orderid'],'userid'=>$this->manUser['userid']]);
         if(!$rs) return $this->returnMsg('订单不存在');
         return $this->returnMsg(['status'=>intval($rs->status),'points'=>dround($rs->points)],1);

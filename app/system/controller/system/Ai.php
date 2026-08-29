@@ -20,6 +20,7 @@ class Ai extends AdminBase
         $data = [];
         foreach($rs as $v){
             if($v['private']) $v['value'] = half_replace(strval($v['value']));
+            if($v['options']) $v['options'] = parse_attr($v['options']);
             $v['placeholder'] = $v['tips'];
             $data[$v['name']] = $v;
         }

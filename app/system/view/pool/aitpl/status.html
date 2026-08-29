@@ -46,7 +46,7 @@ layui.use(['element'], function(){
                 stop();
                 $('#ai_task_log').text('任务异常：' + res.msg);
             }
-        }, 'post', {headersToken:true, timeout:600000});
+        }, 'get', {timeout:600000});
     }
     function stop(){ if(timer){ clearInterval(timer); timer = null; } }
     $('#ai_task_stat').html('模板生成中，通常需要 1-3 分钟，请勿关闭窗口');

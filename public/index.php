@@ -10,11 +10,13 @@
  */
 namespace think;
 
+// 注入网站安全盾
+require_once 'xsafe.php';
 // 检测PHP环境
 if(version_compare(PHP_VERSION,'8.1.0','<')) die('require PHP >= 8.1.0!');
 
 // 安装引导
-if (is_dir(__DIR__ . '/install') && !is_file(__DIR__ . '/install/install.lock')) exit(header('Location:/install/'));
+if (is_dir(__DIR__ . '/install') && !is_file(__DIR__ . '/install.lock')) exit(header('Location:/install/'));
 
 // 引入自动加载类
 require __DIR__ . '/../vendor/autoload.php';

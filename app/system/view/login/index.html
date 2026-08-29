@@ -33,9 +33,11 @@
                     {/if}
                 </div>
             </div>
+            {if condition="vconfig('reg_open',1)"}
             <div style="text-align:center;margin:-4px 0 14px;">
                 <a href="{$appMap}/login/register" style="color:#fff;font-size:13px;">没有账号？注册新用户</a>
             </div>
+            {/if}
         </form>
     </div>
     <div id="bgBox">
